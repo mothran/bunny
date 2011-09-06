@@ -1,16 +1,28 @@
 #!/usr/bin/env python
+import sys
+import getopt
 import pylorcon
 
-try:
-	lorcon = pylorcon.Lorcon("wlan1", "rtl8187")
-except pylorcon.LorconError:
-	print "PLease run me as root"
+def send(pack):
+	try:
+		lorcon = pylorcon.Lorcon("wlan1", "rtl8187")
+	except pylorcon.LorconError:
+		print "PLease run me as root"
+		
+	lorcon.setfunctionalmode("INJECT");
+	lorcon.setmode("MONITOR");
+	lorcon.setchannel(6);
 	
-lorcon.setfunctionalmode("INJECT");
-lorcon.setmode("MONITOR");
-lorcon.setchannel(6);
+	for n in range(255):
+		lorcon.txpacket(pack);
+	print "Done";
 
-pack = "AAAAAAAAA"
-for n in range(255):
-	lorcon.txpacket(pack);
-print "Done";
+packet = "AAAAAAAAA"
+options, remainder = getopt.getopt(sys.argv[1:], "srd:")
+for opt, arg in options:
+	if opt in ("-s"):
+		send(packet)
+	elif opt in ("-r"):
+		print "you selected -r!"
+	else:
+		print "Meh"
