@@ -21,36 +21,55 @@
 #       MA 02110-1301, USA.
 #       
 #       
-import sys
-import pylorcon
+import sys, os
+import base64
 import time
+
+import pylorcon
+from Crypto.Cipher import AES	#pycrypto
 from pcapy import open_live
 
-class Bunny():
-	def send(self, data, num):
-		for n in range(num):
-			self.lorcon.txpacket(data)
+	# Global vars defines, defaults
+iface = "wlan1"
+driver = "rtl8187"
+chan = 6
+	# for AES 256 the key has too be 32 bytes long.
+AESkey = "A" * 32
+	# for code that sets new key:
+	# password = 'kitty'
+	# key = hashlib.sha256(password).digest()
+
+class Spoof80211():
 	
+# end of Spoof80211 class
+
+class Crypto():
+	# much of this is taken from this how-to: 
+	# http://www.codekoala.com/blog/2009/aes-encryption-python-using-pycrypto/
+	# http://eli.thegreenplace.net/2010/06/25/aes-encryption-of-files-in-python-with-pycrypto/
 	
-	def recive(self):
-		header, rawPack = self.pcapy.next()
+	# TODO:
+	# 1. Initilize the encryptor object with proper IV
+	# 2. Make the data into proper block sizes.
+	# 3. working crypt/decrypt functions
+	# 4. TESTING!
+	def __init__(self)
+		self.BlockSize = 32
+		self.PADDING = "A"
+		mode = MODE_CBC
+		self.encryptor = AES.new(AESkey, mode)
+	def crypt(data):
 		
+	def decrypt(data):
 	
-	def reloop(self):
-		count = 0
-		packNum = 2000
-		startTime = time.time()
-		for n in range(packNum):
-			header, rawPack = self.pcapy.next()
-			size = len(rawPack)
-			if (size % 4 == 0):
-				print "pack num: %d, length is divisible by 4" % n  
-		endTime = time.time()
-		totalTime = endTime - startTime
-		packPerSec = packNum / totalTime
-		print "Total Packets (p/s): %s" % packPerSec
-	
-	def start(self, iface, driver, chan):
+# end of Crypto class
+
+class SendRec():
+	def sendPck(self, data):
+		
+	def recPck(self):
+		
+	def start(self):
 		try:
 			self.lorcon = pylorcon.Lorcon(iface, driver)
 		except:
@@ -68,7 +87,27 @@ class Bunny():
 			self.pcapy = open_live(iface, MAX_LEN, PROMISCUOUS, READ_TIMEOUT)
 		except:
 			print "Error creating pcapy descriptor, try turning on the target interface or setting it to monitor mode"
+	
+	# This exists only for testing purposes.
+	# Too ensure proper packets are read properly and at a high enough rate. 
+	def reloop(self):
+		count = 0
+		packNum = 2000
+		startTime = time.time()
+		for n in range(packNum):
+			header, rawPack = self.pcapy.next()
+			size = len(rawPack)
+			if (size % 4 == 0):
+				print "pack num: %d, length is divisible by 4" % n  
+		endTime = time.time()
+		totalTime = endTime - startTime
+		packPerSec = packNum / totalTime
+		print "Total Packets (p/s): %s" % packPerSec
 
+# end of sendRec Class
+
+class Bunny():
+	
 # end of Bunny class
 
 bunny = Bunny()
