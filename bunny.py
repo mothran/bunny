@@ -33,42 +33,49 @@ from pcapy import open_live
 iface = "wlan1"
 driver = "rtl8187"
 chan = 6
+modulus = 4
+remainder = 0
 	# for AES 256 the key has too be 32 bytes long.
-AESkey = "A" * 32
+AESkey = "B" * 32
 	# for code that sets new key:
 	# password = 'kitty'
 	# key = hashlib.sha256(password).digest()
 
-class Spoof80211():
-	
-# end of Spoof80211 class
 
-class Crypto():
+class AEScrypt():
 	# much of this is taken from this how-to: 
 	# http://www.codekoala.com/blog/2009/aes-encryption-python-using-pycrypto/
 	# http://eli.thegreenplace.net/2010/06/25/aes-encryption-of-files-in-python-with-pycrypto/
 	
 	# TODO:
 	# 1. Initilize the encryptor object with proper IV
-	# 2. Make the data into proper block sizes.
-	# 3. working crypt/decrypt functions
-	# 4. TESTING!
-	def __init__(self)
-		self.BlockSize = 32
-		self.PADDING = "A"
-		mode = MODE_CBC
-		self.encryptor = AES.new(AESkey, mode)
-	def crypt(data):
+
+	def __init__(self):
+		self.blockSize = 32
+		self.padding = "A"
+		self.mode = AES.MODE_CBC
 		
-	def decrypt(data):
+	def encrypt(self, data):
+		iv = os.urandom(16)
+		encryptor = AES.new(AESkey, self.mode, iv)
+		encoded = "%s%s" % (iv, (data + (self.blockSize - len(data) % self.blockSize) * self.padding))
+		# we might want to remove the base64 encoding for when it is actually on air.
+		return base64.b64encode(encryptor.encrypt(encoded))
+		
+	def decrypt(self, data):
+		output = base64.b64decode(data)
+		iv = output[:16]
+		raw = output[16:]
+		encryptor = AES.new(AESkey, self.mode, iv)
+		return encryptor.decrypt(raw).rstrip(self.padding)
 	
 # end of Crypto class
 
 class SendRec():
 	def sendPck(self, data):
-		
+		pass
 	def recPck(self):
-		
+		pass
 	def start(self):
 		try:
 			self.lorcon = pylorcon.Lorcon(iface, driver)
@@ -97,7 +104,7 @@ class SendRec():
 		for n in range(packNum):
 			header, rawPack = self.pcapy.next()
 			size = len(rawPack)
-			if (size % 4 == 0):
+			if (size % modulus == remainder):
 				print "pack num: %d, length is divisible by 4" % n  
 		endTime = time.time()
 		totalTime = endTime - startTime
@@ -106,13 +113,8 @@ class SendRec():
 
 # end of sendRec Class
 
-class Bunny():
-	
-# end of Bunny class
-
-bunny = Bunny()
-bunny.start("wlan1", "rtl8187", 6)
-#bunny.send("AAAAAHELLOAAAAA", 2000)
-bunny.reloop()
-
-print "Done"
+crypter = AEScrypt()
+output = crypter.encrypt("Hello world")
+print "chiphertext: %s" % output
+result = crypter.decrypt(output)
+print "plaintext:   %s" % result
