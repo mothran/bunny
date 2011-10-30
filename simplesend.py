@@ -7,7 +7,7 @@ def send(pack):
 	try:
 		lorcon = pylorcon.Lorcon("wlan1", "rtl8187")
 	except pylorcon.LorconError:
-		print "PLease run me as root"
+		print "Please run me as root"
 		
 	lorcon.setfunctionalmode("INJECT");
 	lorcon.setmode("MONITOR");

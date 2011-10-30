@@ -20,21 +20,26 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 #       
-#       
-import sys, os
-import base64
-import time
+#     
 
+# system imports:  
+import sys, os, time, base64, struct
+
+# depends:
 import pylorcon
 from Crypto.Cipher import AES	#pycrypto
 from pcapy import open_live
+
+# testing imports:
+import binascii
+
 
 	# Global vars defines, defaults
 iface = "wlan1"
 driver = "rtl8187"
 chan = 6
-modulus = 4
-remainder = 0
+modulus = 4.5
+remainder = 4
 	# for AES 256 the key has too be 32 bytes long.
 AESkey = "B" * 32
 	# for code that sets new key:
@@ -47,22 +52,32 @@ class AEScrypt():
 	# http://www.codekoala.com/blog/2009/aes-encryption-python-using-pycrypto/
 	# http://eli.thegreenplace.net/2010/06/25/aes-encryption-of-files-in-python-with-pycrypto/
 	
-	# TODO:
-	# 1. Initilize the encryptor object with proper IV
+	# How the IV is transmited: 
+	# [ - - - 16B - - - -][ - - - - NB - - - - - -]
+	# first 16 bytes for the message is the IV. 
+
 
 	def __init__(self):
+		
 		self.blockSize = 32
+		# This padding byte needs to be changed because it could 
+		# acidentally rstrip a few bytes of the real message (if the plaintext ends in a "A")
 		self.padding = "A"
 		self.mode = AES.MODE_CBC
 		
 	def encrypt(self, data):
+		
+		# returns a block of string of cipher text
 		iv = os.urandom(16)
 		encryptor = AES.new(AESkey, self.mode, iv)
 		encoded = "%s%s" % (iv, (data + (self.blockSize - len(data) % self.blockSize) * self.padding))
+		
 		# we might want to remove the base64 encoding for when it is actually on air.
 		return base64.b64encode(encryptor.encrypt(encoded))
 		
 	def decrypt(self, data):
+		
+		# return a block of plaintext 
 		output = base64.b64decode(data)
 		iv = output[:16]
 		raw = output[16:]
@@ -72,15 +87,37 @@ class AEScrypt():
 # end of Crypto class
 
 class SendRec():
+	
 	def sendPck(self, data):
-		pass
+		# send dat shit!
+		self.lorcon.txpacket(data)
 	def recPck(self):
-		pass
+		# return the raw packet if the mod/remain value is correct. 
+		run = True 
+		while(run):
+			header, rawPack = self.pcapy.next()
+			size = len(rawPack)
+			if (size % modulus == remainder):
+				run = False
+				#print rawPack
+				#print binascii.hexlify(rawPack[2:4])
+					# fmt:
+					#	! = network byte order (Big endian)
+					#	H = unsigned short
+				size = struct.unpack("<H", rawPack[2:4])
+				size = int(size[0])
+				rawPack = rawPack[size:]
+				return rawPack
+				
 	def start(self):
+		# initilize all that shit. 
+		# might consider moving this to a def: __init__
+		
 		try:
 			self.lorcon = pylorcon.Lorcon(iface, driver)
 		except:
-			print "error creating lorcon object"
+			print "Error creating lorcon object, try running as root"
+			exit()
 		self.lorcon.setfunctionalmode("INJECT");
 		self.lorcon.setmode("MONITOR");
 		self.lorcon.setchannel(chan);
@@ -95,9 +132,9 @@ class SendRec():
 		except:
 			print "Error creating pcapy descriptor, try turning on the target interface or setting it to monitor mode"
 	
-	# This exists only for testing purposes.
-	# Too ensure proper packets are read properly and at a high enough rate. 
 	def reloop(self):
+		# This exists only for testing purposes.
+		# Too ensure proper packets are read properly and at a high enough rate. 
 		count = 0
 		packNum = 2000
 		startTime = time.time()
@@ -113,8 +150,14 @@ class SendRec():
 
 # end of sendRec Class
 
-crypter = AEScrypt()
-output = crypter.encrypt("Hello world")
-print "chiphertext: %s" % output
-result = crypter.decrypt(output)
-print "plaintext:   %s" % result
+#crypter = AEScrypt()
+#output = crypter.encrypt("Hello world")
+#print "chiphertext: %s" % output
+#result = crypter.decrypt(output)
+#rint "plaintext:   %s" % result
+
+sandr = SendRec()
+sandr.start()
+sandr.sendPck("HELLO LOVELY WOMAN")
+input = sandr.recPck()
+print input
