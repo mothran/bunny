@@ -99,10 +99,7 @@ class SendRec():
 			size = len(rawPack)
 			if (size % modulus == remainder):
 				run = False
-				#print rawPack
-				#print binascii.hexlify(rawPack[2:4])
 					# fmt:
-					#	! = network byte order (Big endian)
 					#	H = unsigned short
 				size = struct.unpack("<H", rawPack[2:4])
 				size = int(size[0])
@@ -118,8 +115,8 @@ class SendRec():
 		except:
 			print "Error creating lorcon object, try running as root"
 			exit()
-		self.lorcon.setfunctionalmode("INJECT");
 		self.lorcon.setmode("MONITOR");
+		self.lorcon.setfunctionalmode("INJECT");
 		self.lorcon.setchannel(chan);
 		
 		# Quick definitions for pcapy
