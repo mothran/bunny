@@ -39,7 +39,7 @@ iface = "wlan1"
 driver = "rtl8187"
 chan = 6
 modulus = 4.5
-remainder = 4
+remainder = 3.5
 	# for AES 256 the key has too be 32 bytes long.
 AESkey = "B" * 32
 	# for code that sets new key:
@@ -88,10 +88,11 @@ class AEScrypt():
 
 class SendRec():
 	
-	def sendPck(self, data):
+	# These send/rec functions should be used in hidden / paranoid mode.
+	def sendPacket(self, data):
 		# send dat shit!
 		self.lorcon.txpacket(data)
-	def recPck(self):
+	def recPacket(self):
 		# return the raw packet if the mod/remain value is correct. 
 		run = True 
 		while(run):
@@ -105,7 +106,28 @@ class SendRec():
 				size = int(size[0])
 				rawPack = rawPack[size:]
 				return rawPack
-				
+	
+	# these functions should be used if you dont care about being noticed
+	def sendPacketDurFix(self, data):
+		data = "\x00\x00\x00\x00" + data
+		self.lorcon.txpacket(data)
+	
+	def recPacketDurFix(self):
+		# return the raw packet if the mod/remain value is correct. 
+		run = True 
+		while(run):
+			header, rawPack = self.pcapy.next()
+			size = len(rawPack)
+			if (size % modulus == remainder):
+				run = False
+					# fmt:
+					#	H = unsigned short
+				sizeHead = struct.unpack("<H", rawPack[2:4])
+				sizeHead = int(sizeHead[0]) + 4
+				rawPack = rawPack[sizeHead:]
+				return rawPack
+	
+		
 	def start(self):
 		# initilize all that shit. 
 		# might consider moving this to a def: __init__
@@ -155,6 +177,6 @@ class SendRec():
 
 sandr = SendRec()
 sandr.start()
-sandr.sendPck("HELLO LOVELY WOMAN")
-input = sandr.recPck()
+sandr.sendPacketDurFix("HELLO LOVELY WOMAN")
+input = sandr.recPacketDurFix()
 print input
