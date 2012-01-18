@@ -1,0 +1,32 @@
+Bunny.py: a proposal.
+
+Bunny is intended to act as a layer 2 technology for unsignaturable wireless mesh communication.
+Bunny has two modes of operation, one is a simple mesh networking system with built in AES-256 
+encryption, each node will route others traffic hopefully providing a simple, dynamic communications
+channel.  The second mode of operation wraps the higher level mesh network in a layer of obfoscation,
+it does this by passively listening to the local wireless and building a model of 'average' traffic.
+Then using this model it hides small snippets of data within various fields of the 802.11 protocol, 
+that are either poorly defined or prone to contain data with a large variablity rage.  These fields
+will include but are not limited to; vendor data, data packets of encrypted networks, duration fields.
+
+Nodes will be able to pick bunny specific packets with the preshared information of a modulus and 
+remainder value that will be applied to the packet length of each read packet.  Hopefuly bunny will 
+have two layers of communication, one being a transport and routing protocol that will be able to be 
+read with just a AES key, modulus and remainder value.  This layer will handel data routing and the 
+backbone of a bunny based network.  Then within that channel, many seperate communication channels 
+can exist with a second round of block chipher encrypted data.  This provides for a 'russian doll'
+model of commuincation channels, thus allowing for a properly layered privacy scheme.
+
+So far the project depends on 3 external libraries:
+	1. pylorcon (802.11 injection)
+	2. pcapy	(802.11 reading of packets)
+	3. pycrypto	(cryptography)
+
+
+The overall architecture will have classes for all major sectors of the programs:
+	- encryption
+	- send / recv
+	- routing
+	- traffic modeling
+	- packet creation.
+	- configuration
