@@ -23,7 +23,7 @@
 #     
 
 # system imports:  
-import sys, os, time, base64, struct
+import sys, os, time, struct, operator, random
 
 # depends:
 import pylorcon
@@ -45,8 +45,7 @@ AESkey = "B" * 32
 	# for code that sets new key:
 	# password = 'kitty'
 	# key = hashlib.sha256(password).digest()
-
-
+		
 class AEScrypt():
 	# much of this is taken from this how-to: 
 	# http://www.codekoala.com/blog/2009/aes-encryption-python-using-pycrypto/
@@ -122,6 +121,8 @@ class SendRec():
 		except:
 			print "Error creating pcapy descriptor, try turning on the target interface or setting it to monitor mode"
 	
+	def updateChan(self, channel):
+		self.lorcon.setchannel(channel)
 	
 	# These send/rec functions should be used in hidden / paranoid mode.
 	def sendPacket(self, data):
@@ -148,7 +149,6 @@ class SendRec():
 		while( round((len(data) + 13) % modulus, 2) != remainder):
 			data = data + os.urandom(1);
 		self.lorcon.txpacket(data)
-	
 	def recPacketDurFix(self):
 		# return the raw packet if the mod/remain value is correct. 
 		run = True 
@@ -159,13 +159,17 @@ class SendRec():
 				run = False
 				# H = unsigned short
 				sizeHead = struct.unpack("<H", rawPack[2:4])
+				
+				# the + 4 is for the 4 null bytes that pad the durration field
 				sizeHead = int(sizeHead[0]) + 4
 				rawPack = rawPack[sizeHead:]
 				return rawPack
 	
 	def reloop(self):
-		# This exists only for testing purposes.
-		# Too ensure proper packets are read properly and at a high enough rate. 
+		"""
+		This exists only for testing purposes.
+		Too ensure proper packets are read properly and at a high enough rate. 
+		"""
 		count = 0
 		packNum = 2000
 		startTime = time.time()
@@ -179,16 +183,253 @@ class SendRec():
 		packPerSec = packNum / totalTime
 		print "Total Packets (p/s): %s" % packPerSec
 
+	def recvRaw(self):
+		""" Returns packet	
+		
+		RadioTap headers included
+		
+		"""
+		header, rawPack = self.pcapy.next()
+		return rawPack
+			
+class TrafficModel():
+	"""
+	
+	Builds a model of current traffic that can be used at a later time to make packets.
+	
+	"""
+	data = []
+	time = 3
+	
+	# In network byte order
+	# If you do a lookup on this table and dont find a match it is probly
+	# a 'reserved' type.
+	Dot11_Types = {
+		# management
+		"assocReq": "\x00",
+		"assocRes": "\x10",
+		"reAssocReq": "\x20",
+		"reAssocRes": "\x30",
+		"probeReq": "\x40",
+		"probeRes": "\x50",
+		"beacon": "\x80",
+		"ATIM": "\x90",
+		"disAssoc": "\xa0",
+		"auth": "\xb0",
+		"deAuth": "\xc0",
+		"action": "\xd0",
 
-crypter = AEScrypt()
-output = crypter.encrypt("HELLO WORLD" * 30)
-print "chiphertext: %s" % binascii.hexlify(output)
-print "chiphertext length: %s" % len(output);
-sandr = SendRec()
-sandr.sendPacketDurFix(output)
-input = sandr.recPacketDurFix()
-result = crypter.decrypt(input)
-print "plaintext:   %s" % result
+		# control
+		"blockAckReq": "\x81",
+		"blockAck": "\x91",
+		"PSPoll": "\xa1",
+		"RTS": "\xb1",
+		"CTS": "\xc1",
+		"ACK": "\xd1",
+		"CFend": "\xe1",
+		"CFendCFack": "\xf1",
+
+		# data
+		"data": "\x02",
+		"data-CFAck": "\x12",
+		"data-CFPoll": "\x22",
+		"data-CFAckPoll": "\x32",
+		"dataNULL": "\x42",
+		"data-CFAckNULL": "\x52",
+		"data-CFPollNULL": "\x62",
+		"data-CFAckPollNULL": "\x72",
+		"dataQOS": "\x82",
+		"dataQOS": "\x88",
+		"dataQOS-CFAck": "\x92",
+		"dataQOS-CFPoll": "\xa2",
+		"dataQOS-CFAckPoll": "\xb2",
+		"dataQOSNULL": "\x82",  # wtf why?
+		"dataQOS-CFPollNULL": "\xe2",
+		"dataQOS-CFAckPollNULL": "\xf2",
+	}
+	
+	# Model attributes:
+	# -Type ranges
+	# -MAC addresses
+	# -
+	
+	type_ranges = []
+	mac_addresses = []
+	
+	def __init__(self):
+		self.interface = SendRec()
+		self.collectData()
+		self.stripRadioTap()
+		self.extractModel()
+		
+	def collectData(self):
+		"""
+		
+		Collect packets for the pre determined amount of time.
+		
+		"""
+		start_time = time.time()
+		current_time = start_time
+		while ( (current_time - start_time) < self.time):
+			packet = self.interface.recvRaw()
+			self.data.append(packet)
+			current_time = time.time()
+	
+	def stripRadioTap(self):
+		"""
+		Strips the RadioTap header info out of the packets are replaces the data 
+		list with the new packets.
+		"""
+		temp_data = []
+		for packet in self.data:
+			sizeHead = struct.unpack("<H", packet[2:4])
+			temp_data.append(packet[sizeHead[0]:])
+		self.data = temp_data
+	
+	# For Debugging 
+	# 
+	#def showData(self):
+	#	print "Packets: "
+	#	for packet in self.data:
+	#		print binascii.hexlify(packet)
+	#		print ""
+	#	print "Packet Count: " + str(len(self.data))
+
+	def rawToType(self, type_raw):
+		"""
+		
+		input the byte and return a string of the 802.11 type
+		
+		"""
+		for k,v in self.Dot11_Types.iteritems():
+			if (v == type_raw[0]):
+				return k
+		return "reserved (" + binascii.hexlify(type_raw[0]) + ")"
+	
+	def buildModelTypes(self, graphs):
+		"""
+		
+		Adds the extracted types and %'s to the model
+		
+		"""
+		count = 0.0
+		for type in graphs:
+			count += type[1]
+		for type in graphs:
+			self.type_ranges.append( [type[0], (type[1] / count)] )
+			
+	def buildModelAddresses(self, addresses):
+		""""
+		
+		Adds the extracted addresses and %'s to the model
+		
+		"""
+		count = 0.0
+		for addr in addresses:
+			count += addr[1]
+		for addr in addresses:
+			self.mac_addresses.append( [addr[0], (addr[1] / count)])
+	def extractModel(self):
+		"""
+		
+		Loops through all collected packets and creates different aspects of the model
+		
+		"""
+		graphs = []
+		addresses = []
+	
+		# loop through all packets, then loop through all types,
+		# append if the type is not found,
+		# inrement count if it is.
+		for packet in self.data:
+			
+			# addresses[addr, count]
+			# model common mac addresses used
+			mac = packet[10:15]
+			found = False
+			for addr in addresses:
+				if (mac == addr[0]):
+					addr[1] = addr[1] + 1
+					found = True
+			if(found == False):
+				addresses.append([mac, 1])
+			
+			# graphs[type, count]
+			type = packet[:1]
+			found = False
+			for types in graphs:
+				if (type == types[0]):
+					types[1] = types[1] + 1
+					found = True
+			if(found == False):
+				graphs.append([type, 1])
+		
+		# sort by count		
+		graphs.sort(key=operator.itemgetter(1), reverse=True)
+		addresses.sort(key=operator.itemgetter(1), reverse=True)
+		
+		self.buildModelTypes(graphs)
+		self.buildModelAddresses(addresses)
+		
+	# debugging:
+	def printTypes(self):
+		"""
+		
+		Prints out a list of the packet types and percentages in the model
+		
+		"""
+		print "%-15s%s" % ("Type", "Percent")
+		print "-" * 20
+		for entry in self.type_ranges:
+			print "%-15s%f" % (self.rawToType(entry[0]), entry[1])
+
+	def printMacs(self):
+		"""
+		
+		Prints out a list of src mac address and percentages in the model
+		
+		"""
+		print "\n%-15s%s" % ("Addr", "Percent")
+		print "-" * 20
+		for entry in self.mac_addresses:
+			print "%-15s%f" % (binascii.hexlify(entry[0]), entry[1])
+
+	def getValueFrom(self, array):
+		"""
+		
+		Returns a value (such as a MAC addr or packet type) from the model of the given list.
+		Follows the [name, value] structure.
+		
+		"""
+		num = random.random()
+		count = 0.0
+		for entry in array:
+			count += entry[1] 
+			if count > num:
+				break
+		return entry[0];
+
+# test traffic mapping
+test_map = TrafficModel()
+print "\nChannel: %s" % chan
+
+test_map.printTypes()
+test_map.printMacs()
+
+test_map.mac_addresses = []
+test_map.type_ranges = []
+test_map.data = []
+
+
+#crypter = AEScrypt()
+#output = crypter.encrypt("HELLO WORLD" * 30)
+#print "chiphertext: %s" % binascii.hexlify(output)
+#print "chiphertext length: %s" % len(output);
+#sandr = SendRec()
+#sandr.sendPacketDurFix(output)
+#input = sandr.recPacketDurFix()
+#result = crypter.decrypt(input)
+#print "plaintext:   %s" % result
 
 #sandr = SendRec()
 #sandr.sendPacketDurFix("HELLO LOVELY WOMAN")
