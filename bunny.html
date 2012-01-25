@@ -1,0 +1,212 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module bunny</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>bunny</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/mothra/X/bunny/bunny.py">/home/mothra/X/bunny/bunny.py</a></font></td></tr></table>
+    <p><tt>#&nbsp;-*-&nbsp;coding:&nbsp;utf-8&nbsp;-*-<br>
+#<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bunny.py<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Copyright&nbsp;2011&nbsp;Mothra&nbsp;&lt;mothra@rouges&gt;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This&nbsp;program&nbsp;is&nbsp;free&nbsp;software;&nbsp;you&nbsp;can&nbsp;redistribute&nbsp;it&nbsp;and/or&nbsp;modify<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;as&nbsp;published&nbsp;by<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;Free&nbsp;Software&nbsp;Foundation;&nbsp;either&nbsp;version&nbsp;2&nbsp;of&nbsp;the&nbsp;License,&nbsp;or<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(at&nbsp;your&nbsp;option)&nbsp;any&nbsp;later&nbsp;version.<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This&nbsp;program&nbsp;is&nbsp;distributed&nbsp;in&nbsp;the&nbsp;hope&nbsp;that&nbsp;it&nbsp;will&nbsp;be&nbsp;useful,<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;but&nbsp;WITHOUT&nbsp;ANY&nbsp;WARRANTY;&nbsp;without&nbsp;even&nbsp;the&nbsp;implied&nbsp;warranty&nbsp;of<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MERCHANTABILITY&nbsp;or&nbsp;FITNESS&nbsp;FOR&nbsp;A&nbsp;PARTICULAR&nbsp;PURPOSE.&nbsp;&nbsp;See&nbsp;the<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;for&nbsp;more&nbsp;details.<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You&nbsp;should&nbsp;have&nbsp;received&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;along&nbsp;with&nbsp;this&nbsp;program;&nbsp;if&nbsp;not,&nbsp;write&nbsp;to&nbsp;the&nbsp;Free&nbsp;Software<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Foundation,&nbsp;Inc.,&nbsp;51&nbsp;Franklin&nbsp;Street,&nbsp;Fifth&nbsp;Floor,&nbsp;Boston,<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MA&nbsp;02110-1301,&nbsp;USA.<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="Crypto.Cipher.AES.html">Crypto.Cipher.AES</a><br>
+<a href="binascii.html">binascii</a><br>
+<a href="operator.html">operator</a><br>
+</td><td width="25%" valign=top><a href="os.html">os</a><br>
+<a href="pylorcon.html">pylorcon</a><br>
+<a href="random.html">random</a><br>
+</td><td width="25%" valign=top><a href="struct.html">struct</a><br>
+<a href="sys.html">sys</a><br>
+<a href="time.html">time</a><br>
+</td><td width="25%" valign=top><a href="zlib.html">zlib</a><br>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="bunny.html#AEScrypt">AEScrypt</a>
+</font></dt><dt><font face="helvetica, arial"><a href="bunny.html#Bunny">Bunny</a>
+</font></dt><dt><font face="helvetica, arial"><a href="bunny.html#SendRec">SendRec</a>
+</font></dt><dt><font face="helvetica, arial"><a href="bunny.html#Templates">Templates</a>
+</font></dt><dt><font face="helvetica, arial"><a href="bunny.html#TrafficModel">TrafficModel</a>
+</font></dt></dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="AEScrypt">class <strong>AEScrypt</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Class&nbsp;for&nbsp;encrypting&nbsp;and&nbsp;decrypting&nbsp;AES256&nbsp;data.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="AEScrypt-__init__"><strong>__init__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AEScrypt-decrypt"><strong>decrypt</strong></a>(self, data)</dt></dl>
+
+<dl><dt><a name="AEScrypt-encrypt"><strong>encrypt</strong></a>(self, data)</dt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Bunny">class <strong>Bunny</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>High&nbsp;level&nbsp;send&nbsp;and&nbsp;recive&nbsp;for&nbsp;wrapping&nbsp;all&nbsp;the&nbsp;lower&nbsp;function&nbsp;of&nbsp;bunny&nbsp;in&nbsp;paranoid&nbsp;mode.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Bunny-__init__"><strong>__init__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Bunny-recvBunny"><strong>recvBunny</strong></a>(self, packet)</dt></dl>
+
+<dl><dt><a name="Bunny-sendBunny"><strong>sendBunny</strong></a>(self, packet)</dt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="SendRec">class <strong>SendRec</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Main&nbsp;IO&nbsp;functionality&nbsp;of&nbsp;bunny,&nbsp;using&nbsp;pcapy&nbsp;and&nbsp;lorcon&nbsp;to&nbsp;do&nbsp;send&nbsp;and&nbsp;receive.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="SendRec-__init__"><strong>__init__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="SendRec-recPacket"><strong>recPacket</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="SendRec-recPacketDurFix"><strong>recPacketDurFix</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="SendRec-recvRaw"><strong>recvRaw</strong></a>(self)</dt><dd><tt>Returns&nbsp;packet&nbsp;<br>
+&nbsp;<br>
+RadioTap&nbsp;headers&nbsp;included</tt></dd></dl>
+
+<dl><dt><a name="SendRec-reloop"><strong>reloop</strong></a>(self)</dt><dd><tt>This&nbsp;exists&nbsp;only&nbsp;for&nbsp;testing&nbsp;purposes.<br>
+Too&nbsp;ensure&nbsp;proper&nbsp;packets&nbsp;are&nbsp;read&nbsp;properly&nbsp;and&nbsp;at&nbsp;a&nbsp;high&nbsp;enough&nbsp;rate.</tt></dd></dl>
+
+<dl><dt><a name="SendRec-sendPacket"><strong>sendPacket</strong></a>(self, data)</dt><dd><tt>#&nbsp;These&nbsp;send/rec&nbsp;functions&nbsp;should&nbsp;be&nbsp;used&nbsp;in&nbsp;hidden&nbsp;/&nbsp;paranoid&nbsp;mode.</tt></dd></dl>
+
+<dl><dt><a name="SendRec-sendPacketDurFix"><strong>sendPacketDurFix</strong></a>(self, data)</dt><dd><tt>#&nbsp;these&nbsp;functions&nbsp;should&nbsp;be&nbsp;used&nbsp;if&nbsp;you&nbsp;dont&nbsp;care&nbsp;about&nbsp;being&nbsp;noticed</tt></dd></dl>
+
+<dl><dt><a name="SendRec-updateChan"><strong>updateChan</strong></a>(self, channel)</dt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Templates">class <strong>Templates</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Contains&nbsp;templates&nbsp;for&nbsp;all&nbsp;packet&nbsp;types&nbsp;used&nbsp;by&nbsp;bunny.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Data and other attributes defined here:<br>
+<dl><dt><strong>Beacon</strong> = &lt;class bunny.Beacon&gt;</dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="TrafficModel">class <strong>TrafficModel</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Builds&nbsp;a&nbsp;model&nbsp;of&nbsp;current&nbsp;traffic&nbsp;that&nbsp;can&nbsp;be&nbsp;used&nbsp;at&nbsp;a&nbsp;later&nbsp;time&nbsp;to&nbsp;make&nbsp;packets.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="TrafficModel-__init__"><strong>__init__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="TrafficModel-buildModelAddresses"><strong>buildModelAddresses</strong></a>(self, addresses)</dt><dd><tt>"<br>
+&nbsp;<br>
+Adds&nbsp;the&nbsp;extracted&nbsp;addresses&nbsp;and&nbsp;%'s&nbsp;to&nbsp;the&nbsp;model</tt></dd></dl>
+
+<dl><dt><a name="TrafficModel-buildModelTypes"><strong>buildModelTypes</strong></a>(self, graphs)</dt><dd><tt>Adds&nbsp;the&nbsp;extracted&nbsp;types&nbsp;and&nbsp;%'s&nbsp;to&nbsp;the&nbsp;model</tt></dd></dl>
+
+<dl><dt><a name="TrafficModel-collectData"><strong>collectData</strong></a>(self)</dt><dd><tt>Collect&nbsp;packets&nbsp;for&nbsp;the&nbsp;pre&nbsp;determined&nbsp;amount&nbsp;of&nbsp;time.</tt></dd></dl>
+
+<dl><dt><a name="TrafficModel-extractModel"><strong>extractModel</strong></a>(self)</dt><dd><tt>Loops&nbsp;through&nbsp;all&nbsp;collected&nbsp;packets&nbsp;and&nbsp;creates&nbsp;different&nbsp;aspects&nbsp;of&nbsp;the&nbsp;model</tt></dd></dl>
+
+<dl><dt><a name="TrafficModel-getEntryFrom"><strong>getEntryFrom</strong></a>(self, array)</dt><dd><tt>Returns&nbsp;a&nbsp;frequency&nbsp;adjusted&nbsp;random&nbsp;entry&nbsp;from&nbsp;an&nbsp;array&nbsp;such&nbsp;as&nbsp;type_ranges<br>
+Follows&nbsp;the&nbsp;[name,&nbsp;freq,&nbsp;...]&nbsp;structure.</tt></dd></dl>
+
+<dl><dt><a name="TrafficModel-insertTemplates"><strong>insertTemplates</strong></a>(self)</dt><dd><tt>loops&nbsp;through&nbsp;the&nbsp;type_ranges&nbsp;list&nbsp;and&nbsp;replaces&nbsp;the&nbsp;raw&nbsp;packet&nbsp;data&nbsp;with&nbsp;template&nbsp;objects<br>
+type_ranges&nbsp;becomes:<br>
+[type,&nbsp;freq,&nbsp;templateObject,&nbsp;injectLen]</tt></dd></dl>
+
+<dl><dt><a name="TrafficModel-printMacs"><strong>printMacs</strong></a>(self)</dt><dd><tt>Prints&nbsp;out&nbsp;a&nbsp;list&nbsp;of&nbsp;src&nbsp;mac&nbsp;address&nbsp;and&nbsp;percentages&nbsp;in&nbsp;the&nbsp;model</tt></dd></dl>
+
+<dl><dt><a name="TrafficModel-printTypes"><strong>printTypes</strong></a>(self)</dt><dd><tt>Prints&nbsp;out&nbsp;a&nbsp;list&nbsp;of&nbsp;the&nbsp;packet&nbsp;types&nbsp;and&nbsp;percentages&nbsp;in&nbsp;the&nbsp;model</tt></dd></dl>
+
+<dl><dt><a name="TrafficModel-printTypesWithPackets"><strong>printTypesWithPackets</strong></a>(self)</dt><dd><tt>Prints&nbsp;out&nbsp;a&nbsp;list&nbsp;of&nbsp;the&nbsp;packet&nbsp;types&nbsp;and&nbsp;percentages&nbsp;in&nbsp;the&nbsp;model</tt></dd></dl>
+
+<dl><dt><a name="TrafficModel-rawToType"><strong>rawToType</strong></a>(self, type_raw)</dt><dd><tt>input&nbsp;the&nbsp;byte&nbsp;and&nbsp;return&nbsp;a&nbsp;string&nbsp;of&nbsp;the&nbsp;802.11&nbsp;type</tt></dd></dl>
+
+<dl><dt><a name="TrafficModel-stripRadioTap"><strong>stripRadioTap</strong></a>(self)</dt><dd><tt>Strips&nbsp;the&nbsp;RadioTap&nbsp;header&nbsp;info&nbsp;out&nbsp;of&nbsp;the&nbsp;packets&nbsp;are&nbsp;replaces&nbsp;the&nbsp;data&nbsp;<br>
+list&nbsp;with&nbsp;the&nbsp;new&nbsp;packets.</tt></dd></dl>
+
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>Dot11_Types</strong> = {'ACK': '<font color="#c040c0">\xd4</font>', 'ATIM': '<font color="#c040c0">\x90</font>', 'CFend': '<font color="#c040c0">\xe1</font>', 'CFendCFack': '<font color="#c040c0">\xf1</font>', 'CTS': '<font color="#c040c0">\xc1</font>', 'PSPoll': '<font color="#c040c0">\xa1</font>', 'RTS': '<font color="#c040c0">\xb1</font>', 'action': '<font color="#c040c0">\xd0</font>', 'assocReq': '<font color="#c040c0">\x00</font>', 'assocRes': '<font color="#c040c0">\x10</font>', ...}</dl>
+
+<dl><dt><strong>data</strong> = []</dl>
+
+<dl><dt><strong>mac_addresses</strong> = []</dl>
+
+<dl><dt><strong>time</strong> = 3</dl>
+
+<dl><dt><strong>type_ranges</strong> = []</dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-open_live"><strong>open_live</strong></a>(...)</dt><dd><tt><a href="#-open_live">open_live</a>(device,&nbsp;snaplen,&nbsp;promisc,&nbsp;to_ms)&nbsp;opens&nbsp;a&nbsp;pcap&nbsp;device</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>AESkey</strong> = 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'<br>
+<strong>chan</strong> = 1<br>
+<strong>driver</strong> = 'rtl8187'<br>
+<strong>iface</strong> = 'wlan1'<br>
+<strong>modulus</strong> = 3.6<br>
+<strong>remainder</strong> = 1.2<br>
+<strong>test_map</strong> = &lt;bunny.TrafficModel instance&gt;</td></tr></table>
+</body></html>

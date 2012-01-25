@@ -12,5 +12,6 @@ lorcon.setfunctionalmode("INJECT");
 lorcon.setmode("MONITOR");
 lorcon.setchannel(6);
 
-packet = "AAAAAAAAA"
-lorcon.txpacket(pack);
+packet = "A" * 1400
+for a in range(1, 200):
+	lorcon.txpacket(packet);
