@@ -134,7 +134,8 @@ class SendRec:
 	
 	# These send/rec functions should be used in hidden / paranoid mode.
 	def sendPacket(self, data):
-		self.lorcon.txpacket(data)
+		if data is not None:
+			self.lorcon.txpacket(data)
 	def recPacket(self):
 		# return the raw packet if the mod/remain value is correct. 
 		run = True 
@@ -307,7 +308,7 @@ class Templates:
 			tag = ["\xdd", 0, self.vendors[random.randrange(0, len(self.vendors))][0]]
 			
 			while( round((len(outpack) + tag[1] + 2 + 13) % modulus, 2) != remainder):
-				tag[2] = tag[2] + os.urandom(1);
+				tag[2] = tag[2] + os.urandom(1)
 				tag[1] = len(tag[2])
 			outpack = outpack + tag[0] + struct.pack("B", tag[1]) + tag[2]
 			return outpack
@@ -341,11 +342,12 @@ class Templates:
 			for entry in self.tags:
 				if (entry[0] == id):
 					return entry
-	class QOSData:
+	class DataQOS:
 		"""
 		
-		Template to hold a example Data packet type.
-		
+		Template to hold a example Data packet type, currently we only support encrypted data packets.
+		In the furture, unknown LLC encapilation types can be used with not encrypted modeled traffic.
+				
 		"""
 		injectable = 0
 		
@@ -358,7 +360,7 @@ class Templates:
 		DA = ""
 		sequence_num = ""
 		QOS = ""
-		CCMP = ""
+		crypto = ""
 		
 		# LLC
 		
@@ -375,9 +377,31 @@ class Templates:
 			self.sequence_num = packet[22:24]
 			#self.RS = packet[21:26]
 			self.QOS = packet[24:26]
-		
+			self.crypto = packet[26:34]
+			self.databody = packet[34:]
+			
+			self.injectable = 5 + len(self.databody)
+			
 		def makePacket(self, inject_data):
-			pass
+			"""
+			
+			Make a QOS data packet with injected data, fields are: Sequence num, crypto, databody
+			
+			"""
+			outbound = self.type + self.frame_control + self.duration+ self.BSSID + self.SA + self.DA + inject_data[0:2]
+			outbound = outbound + self.QOS + inject_data[2:5] + self.crypto[3:] + inject_data[5:]
+			
+			outbound = self.resize(outbound)
+			
+		def resize(self, outpack):
+			
+			while(round( (len(outpack) + 13) % modulus, 2) != remainder):
+				outpack = outpack + os.urandom(1)
+			return outpack
+			
+		def decode(self, input):
+			# read the databody up to inject_data - 5
+			return  input[22:24] + input[26:29] + input[34:self.injectable-5]
 		
 class TrafficModel():
 	"""
@@ -585,12 +609,15 @@ class TrafficModel():
 		
 		"""
 		for entry in self.type_ranges:
-			if (self.rawToType(entry[0]) == "beacon"):
+			type = self.rawToType(entry[0])
+			if (type == "beacon"):
 				# replace raw data with object of template type, then append the injection length
 				entry[2] = Templates.Beacon(entry[2])
 				entry[3] = entry[2].injectable
+			if (type == "data" or type == "dataQOS"):
+				entry[2] = Templates.DataQOS(entry[2])
+				entry[3] = entry[2].injectable
 			# add more
-
 	# debugging:
 	def printTypes(self):
 		"""
@@ -613,7 +640,6 @@ class TrafficModel():
 		print "-" * 30
 		for entry in self.type_ranges:
 			print "%-15s%-10f%s" % (self.rawToType(entry[0]), entry[1], binascii.hexlify(entry[2]))
-
 
 	def printMacs(self):
 		"""
@@ -656,23 +682,45 @@ class Bunny:
 	def sendBunny(self, packet):
 		packet = self.cryptor.encrypt(packet)
 		while ( len(packet) != 0 ):
-			entry = getEntryFrom(self.model.type_ranges)
-			outpacket = entry[2].makePacket(packet[:entry[3]])
+			entry = self.model.getEntryFrom(self.model.type_ranges)
+			try:
+				outpacket = entry[2].makePacket(packet[:entry[3]])
+			except AttributeError:
+				continue
 			packet = packet[entry[3]:]
 			self.inandout.sendPacket(outpacket)
-	def recvBunny(self, packet):
-		pass
-
+	def recvBunny(self):
+		decoded = ""
+		while(len(decoded) <= 18):
+			encoded = self.inandout.recPacket()
+			for type in self.model.type_ranges:
+				if type[0] == encoded[0:1]:
+					decoded = decoded + type[2].decode(encoded)
+		blocks, = struct.unpack("H", decoded[16:18])
+		while(len(decoded) <= blocks*32 + 18):
+			encoded = self.inandout.recPacket()
+			for type in self.model.type_ranges:
+				if type[0] == encoded[0:1]:
+					decoded = decoded + type[2].decode(encoded)
+		return self.cryptor.decrypt(decoded)
+		
 # test traffic mapping
-test_map = TrafficModel()
+#test_map = TrafficModel()
 
 print "\nChannel: %s" % chan
 
-test_map.printTypes()
-test_map.printMacs()
+#test_map.printTypes()
+#test_map.printMacs()
 
-test_map.interface.sendPacket(test_map.type_ranges[0][2].makePacket("HELLHELLO"))
-print test_map.type_ranges[0][2].decode(test_map.interface.recPacket())
+bunny = Bunny()
+bunny.model.printTypes()
+bunny.model.printMacs()
+
+bunny.sendBunny("YODOG")
+print bunny.recvBunny()
+
+#test_map.interface.sendPacket(test_map.type_ranges[0][2].makePacket("HELLHELLO"))
+#print test_map.type_ranges[0][2].decode(test_map.interface.recPacket())
 
 
 #test_map.interface.updateChan(channel)
