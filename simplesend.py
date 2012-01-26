@@ -3,6 +3,15 @@ import sys
 import getopt
 import pylorcon
 
+import ConfigParser
+
+
+config = ConfigParser.RawConfigParser()
+config.add_section("LORCON")
+config.set("LORCON", "chan", 6)
+with open("test.conf", "wb") as configfile:
+	config.write(configfile)
+
 try:
 	lorcon = pylorcon.Lorcon("wlan1", "rtl8187")
 except pylorcon.LorconError:

@@ -23,7 +23,7 @@
 #     
 
 # system imports:  
-import sys, os, time, struct, operator, random, zlib
+import sys, os, time, struct, operator, random, zlib, ConfigParser, hashlib
 
 # depends:
 import pylorcon
@@ -34,18 +34,60 @@ from pcapy import open_live
 import binascii
 
 
-	# Global vars defines, defaults
-iface = "wlan1"
-driver = "rtl8187"
-chan = 1
-modulus = 3.6
-remainder = 1.2
-	# for AES 256 the key has to be 32 bytes long.
-AESkey = "B" * 32
-	# for code that sets new key:
-	# password = 'kitty'
-	# key = hashlib.sha256(password).digest()
+class Configure:
+	"""
+	
+	Makes and reads the 'bunny.conf' file where all global varibles are held.
+	
+	"""
+	
+	def __init__(self):
+		"""
 		
+		Reads the config file, if the file does not exist, create it with defaults.
+		
+		"""
+		
+		global AESkey
+		global chan
+		global iface
+		global driver
+		global modulus
+		global remainder
+		
+		config = ConfigParser.RawConfigParser()
+		try:
+			config.readfp(open("bunny.conf"))
+		except IOError:
+			self.makeConfig()
+			config.readfp(open("bunny.cong"))
+			
+		AESkey = binascii.unhexlify(config.get("AES", "key"))
+		chan = config.getint("readWrite", "channel")
+		iface = config.get("readWrite", "interface")
+		driver = config.get("readWrite", "driver")
+		modulus = config.getfloat("readWrite", "modulus")
+		remainder = config.getfloat("readWrite", "remainder")
+		
+	def makeConfig(self):
+		"""
+		
+		These defaults are know working values, PLEASE CHANGE THEM.
+		
+		"""
+		config = ConfigParser.RawConfigParser()
+		config.add_section("AES")
+		config.set("AES", "key", hashlib.sha256("B"*32).hexdigest() )
+		
+		config.add_section("readWrite")
+		config.set("readWrite", "channel", 8)
+		config.set("readWrite", "interface", "wlan1")
+		config.set("readWrite", "driver", "rtl8187")
+		config.set("readWrite", "modulus", 3.6)
+		config.set("readWrite", "remainder", 1.2)
+		with open("bunny.conf", 'wb') as configfile:
+			config.write(configfile)
+	
 class AEScrypt:
 	"""
 	
@@ -207,6 +249,7 @@ class Templates:
 	Contains templates for all packet types used by bunny.
 	
 	"""
+	
 	class Beacon ():
 		"""
 		
@@ -289,7 +332,7 @@ class Templates:
 			
 			for i in range(0, len(self.tags)-2):
 				outbound = outbound + self.tags[i][0] + struct.pack("<B", self.tags[i][1]) + self.tags[i][2]
-			outbound = outbound + "\xdd" + struct.pack("<B", self.injectable - 4) + inject_data[4:]
+			outbound = outbound + "\xdd" + struct.pack("<B", len(inject_data[4:])) + inject_data[4:]
 			#outbound += struct.pack("!i", zlib.crc32(outbound))
 			
 			outbound = self.resize(outbound)
@@ -329,6 +372,9 @@ class Templates:
 				input = input[length + 2:]
 				
 			value_chunk = temp_tags[len(temp_tags) - 2][2]
+			if value_chunk == self.tags[len(self.tags)-2]:
+				return False
+			
 			output = output + value_chunk
 			
 			return output
@@ -675,11 +721,24 @@ class Bunny:
 	"""
 	
 	def __init__(self):
+		"""
+		
+		Setup and build the bunny model
+		
+		"""
+		
+		self.config = Configure()
 		self.inandout = SendRec()
 		self.cryptor = AEScrypt()
 		self.model = TrafficModel()
 		
 	def sendBunny(self, packet):
+		"""
+		
+		Send a Bunny (paranoid) packet
+		
+		"""
+		
 		packet = self.cryptor.encrypt(packet)
 		while ( len(packet) != 0 ):
 			entry = self.model.getEntryFrom(self.model.type_ranges)
@@ -690,59 +749,113 @@ class Bunny:
 			packet = packet[entry[3]:]
 			self.inandout.sendPacket(outpacket)
 	def recvBunny(self):
+		"""
+		
+		Receive a Bunny (paranoid) packet
+		
+		"""
+		
 		decoded = ""
 		while(len(decoded) <= 18):
 			encoded = self.inandout.recPacket()
 			for type in self.model.type_ranges:
 				if type[0] == encoded[0:1]:
-					decoded = decoded + type[2].decode(encoded)
+					if type[3] > 0:
+						temp = type[2].decode(encoded)
+						if temp is not False:
+							decoded = decoded + temp
+							print binascii.hexlify(decoded)
+						break
 		blocks, = struct.unpack("H", decoded[16:18])
 		while(len(decoded) <= blocks*32 + 18):
 			encoded = self.inandout.recPacket()
 			for type in self.model.type_ranges:
 				if type[0] == encoded[0:1]:
-					decoded = decoded + type[2].decode(encoded)
+					if type[3] > 0:
+						temp = type[2].decode(encoded)
+						if temp is not False:
+							decoded = decoded + temp
+							print binascii.hexlify(decoded)
+						break
 		return self.cryptor.decrypt(decoded)
+
+	def recvBunny2(self):
+		run = True
+		blockget = False
+		type = []
+		decoded = ""
 		
-# test traffic mapping
-#test_map = TrafficModel()
+		# I am so sorry. . 
+		while run:
+			print "starting again"
+			print binascii.hexlify(decoded)
+			decoded = ""
+			encoded = self.inandout.recPacket()
+			for entry in self.model.type_ranges:
+				if entry[0] == encoded[0:1]:
+					if entry[3] > 0:
+						type = entry
+			if len(type) < 2:
+				continue
+			temp = type[2].decode(encoded)
+			if temp is False:
+				continue
+			else:
+				temp_len = len(decoded)
+				if temp_len < 18:
+					decoded = decoded + temp
+				else:
+					if blockget == False:
+						blocks, = struct.unpack("H", decoded[16:18])
+						blockget = True
+						decoded = decoded + temp
+					else:
+						if temp_len > 32*blocks:
+							# might be redundant
+							run = False
+							break
+						else:
+							decoded = decoded + temp
+		return self.cryptor.decrypt(decoded)
+			
+def main():
+	if sys.argv[1] == "-l":
+		print "Bunny in listen mode"
+		print "Building model: . . . "
+		bunny = Bunny()
+		print "Bunny model built and ready to listen"
+		while True:
+			print bunny.recvBunny2()
+	elif sys.argv[1] == "-s":
+		if sys.argv[2] is not None:
+			bunny = Bunny()
+			print "Bunny model built"
+			bunny.model.printTypes()
+			bunny.model.printMacs()
+			print "sending message: %s" % sys.argv[2]
+			bunny.sendBunny(sys.argv[2])
+			
+			while True:
+				print "again? [Y/N]"
+				input = sys.stdin.readline()
+				if input == "Y\n" or input == "y\n":
+					print "sending message: %s" % sys.argv[2]
+					bunny.sendBunny(sys.argv[2])
+				elif input == "N\n" or input == "n\n":
+					sys.exit()
+		else:
+			print "you fail, include a messge to send" 
+			sys.exit()
+	elif sys.argv[1] == "-h":
+		for c in range(1,12):
+			chan = c
+			print "Channel: %d" % chan			
+			bunny = Bunny()
+			bunny.model.printTypes()
+			bunny.model.printMacs()
+	else:
+		print "you fail at args"
+		sys.exit()
 
-print "\nChannel: %s" % chan
-
-#test_map.printTypes()
-#test_map.printMacs()
-
-bunny = Bunny()
-bunny.model.printTypes()
-bunny.model.printMacs()
-
-bunny.sendBunny("YODOG")
-print bunny.recvBunny()
-
-#test_map.interface.sendPacket(test_map.type_ranges[0][2].makePacket("HELLHELLO"))
-#print test_map.type_ranges[0][2].decode(test_map.interface.recPacket())
-
-
-#test_map.interface.updateChan(channel)
-#print test_map.type_ranges[0][2].SSID
-#test_map.getEntryFrom(type_ranges)
-
-
-#crypter = AEScrypt()
-#output = crypter.encrypt("HELLO WORLD" * 30)
-#print "chiphertext: %s" % binascii.hexlify(output)
-#print "chiphertext length: %s" % len(output);
-#sandr = SendRec()
-#sandr.sendPacketDurFix(output)
-#input = sandr.recPacketDurFix()
-#result = crypter.decrypt(input)
-#print "plaintext:   %s" % result
-
-#sandr = SendRec()
-#sandr.sendPacketDurFix("HELLO LOVELY WOMAN")
-#input = sandr.recPacketDurFix()
-#print input
-
-#object = SendRec()
-#object.start()
-#object.reloop()
+if __name__ == "__main__":
+	main()
