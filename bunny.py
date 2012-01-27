@@ -60,7 +60,7 @@ class Configure:
 			config.readfp(open("bunny.conf"))
 		except IOError:
 			self.makeConfig()
-			config.readfp(open("bunny.cong"))
+			config.readfp(open("bunny.conf"))
 			
 		AESkey = binascii.unhexlify(config.get("AES", "key"))
 		chan = config.getint("readWrite", "channel")
@@ -83,8 +83,8 @@ class Configure:
 		config.set("readWrite", "channel", 8)
 		config.set("readWrite", "interface", "wlan1")
 		config.set("readWrite", "driver", "rtl8187")
-		config.set("readWrite", "modulus", 3.6)
-		config.set("readWrite", "remainder", 1.2)
+		config.set("readWrite", "modulus", 1.23)
+		config.set("readWrite", "remainder", 0.82)
 		with open("bunny.conf", 'wb') as configfile:
 			config.write(configfile)
 	
@@ -136,6 +136,7 @@ class AEScrypt:
 			Eoutput = encryptor.decrypt(raw).rstrip(self.padding)
 		except:
 			print "Bad Packet legnth, consider resending"
+			return False
 			
 		return Eoutput
 		
@@ -250,7 +251,7 @@ class Templates:
 	
 	"""
 	
-	class Beacon ():
+	class Beacon:
 		"""
 		
 		Template for Beacon packet types.  Initialize the template with a raw packet dump 
@@ -354,6 +355,8 @@ class Templates:
 				tag[2] = tag[2] + os.urandom(1)
 				tag[1] = len(tag[2])
 			outpack = outpack + tag[0] + struct.pack("B", tag[1]) + tag[2]
+			
+			print len(outpack)
 			return outpack
 		
 		def decode(self, input):
@@ -372,8 +375,10 @@ class Templates:
 				input = input[length + 2:]
 				
 			value_chunk = temp_tags[len(temp_tags) - 2][2]
-			if value_chunk == self.tags[len(self.tags)-2]:
-				return False
+			
+			# Fail design:
+			#if value_chunk == self.tags[len(self.tags)-2]:
+			#	return False
 			
 			output = output + value_chunk
 			
@@ -449,6 +454,94 @@ class Templates:
 			# read the databody up to inject_data - 5
 			return  input[22:24] + input[26:29] + input[34:self.injectable-5]
 		
+	class ProbeRequest:
+		"""
+		
+		ProbeRequst packet type template, injectable fields are sequence number and SSID.
+		
+		"""
+		injectable = 0
+		tags = []
+		vendors = []
+		
+		type = ""
+		frame_control = ""
+		duration = ""
+		BSSID = ""
+		SA = ""
+		DA = ""
+		sequence_num = ""
+		
+		def __init__(self, packet):
+			# For a speed up we could use the struct.unpack() method
+			# self.type, self.frame_control, struct.unpack("", packet)
+			self.type = packet[0:1]
+			self.frame_control = packet[1:2]
+			self.duration = packet[2:4]
+			self.DA = packet[4:10]
+			self.SA = packet[10:16]
+			self.BSSID = packet[16:22]
+			self.sequence_num = packet[22:24]
+			
+			packet = packet[24:]
+			
+			while (len(packet) != 0):
+				id = packet[:1]
+				length, = struct.unpack("B", packet[1:2])
+				value = packet[2:length+2]
+				self.tags.append([id, length, value])
+				if id == "\xdd":
+					self.vendors.append([value[:3]])
+				packet = packet[length + 2:]
+				
+			self.SSID = self.tagGrabber("\x00")
+			
+			# ProbeRequests get the data injected into the ssid's
+			# and are resized by a vendor tag
+			self.injectable = self.SSID[1]
+			
+		def makePacket(self, inject_data):
+			outbound = self.type + self.frame_control + self.duration + self.DA + self.SA + self.BSSID + inject_data[0:2]
+			outbound = outbound + "\x00" + struct.pack("<B", len(inject_data[2:])) + inject_data[2:] 
+			for i in range(1, len(self.tags)-1):
+				outbound = outbound + self.tags[i][0] + struct.pack("<B", self.tags[i][1]) + self.tags[i][2]
+
+			return self.resize(outbound)
+		def resize(self, outpack):
+			"""
+			
+			Resizes the packet with the proper mod / remainder value
+			Primarly uses last vendor tag.
+			
+			"""
+			# counter will be the size of the tag
+			# using \xdd for vendor tag.
+			if len(self.vendors) == 0:
+				tag = ["\xdd", 0, "" + os.urandom(3)]
+			else:
+				tag = ["\xdd", 0, self.vendors[random.randrange(0, len(self.vendors))][0]]
+			
+			while( round((len(outpack) + tag[1] + 2 + 13) % modulus, 2) != remainder):
+				tag[2] = tag[2] + os.urandom(1)
+				tag[1] = len(tag[2])
+			outpack = outpack + tag[0] + struct.pack("<B", tag[1]) + tag[2]
+			print len(outpack)
+			return outpack
+		
+		def decode(self, input):
+			output = input[22:24]
+			size, = struct.unpack("<B", input[25:26])
+			return output + input[26:size]
+			
+		def tagGrabber(self, id):
+			"""
+			
+			return the whole tag from an array of tags by its tag id
+			
+			"""
+			for entry in self.tags:
+				if (entry[0] == id):
+					return entry
 class TrafficModel():
 	"""
 	
@@ -663,6 +756,9 @@ class TrafficModel():
 			if (type == "data" or type == "dataQOS"):
 				entry[2] = Templates.DataQOS(entry[2])
 				entry[3] = entry[2].injectable
+			if (type == "probeReq"):
+				entry[2] = Templates.ProbeRequest(entry[2])
+				entry[3] = entry[2].injectable
 			# add more
 	# debugging:
 	def printTypes(self):
@@ -719,7 +815,7 @@ class Bunny:
 	High level send and recive for wrapping all the lower function of bunny in paranoid mode.
 	
 	"""
-	
+		
 	def __init__(self):
 		"""
 		
@@ -744,42 +840,13 @@ class Bunny:
 			entry = self.model.getEntryFrom(self.model.type_ranges)
 			try:
 				outpacket = entry[2].makePacket(packet[:entry[3]])
+				print "Sending with: %s" % self.model.rawToType(entry[0])
 			except AttributeError:
 				continue
 			packet = packet[entry[3]:]
 			self.inandout.sendPacket(outpacket)
-	def recvBunny(self):
-		"""
-		
-		Receive a Bunny (paranoid) packet
-		
-		"""
-		
-		decoded = ""
-		while(len(decoded) <= 18):
-			encoded = self.inandout.recPacket()
-			for type in self.model.type_ranges:
-				if type[0] == encoded[0:1]:
-					if type[3] > 0:
-						temp = type[2].decode(encoded)
-						if temp is not False:
-							decoded = decoded + temp
-							print binascii.hexlify(decoded)
-						break
-		blocks, = struct.unpack("H", decoded[16:18])
-		while(len(decoded) <= blocks*32 + 18):
-			encoded = self.inandout.recPacket()
-			for type in self.model.type_ranges:
-				if type[0] == encoded[0:1]:
-					if type[3] > 0:
-						temp = type[2].decode(encoded)
-						if temp is not False:
-							decoded = decoded + temp
-							print binascii.hexlify(decoded)
-						break
-		return self.cryptor.decrypt(decoded)
 
-	def recvBunny2(self):
+	def recvBunny(self):
 		run = True
 		blockget = False
 		type = []
@@ -787,9 +854,10 @@ class Bunny:
 		
 		# I am so sorry. . 
 		while run:
-			print "starting again"
-			print binascii.hexlify(decoded)
-			decoded = ""
+			# debuggging: 
+			#print "starting again"
+			#print binascii.hexlify(decoded)
+			
 			encoded = self.inandout.recPacket()
 			for entry in self.model.type_ranges:
 				if entry[0] == encoded[0:1]:
@@ -801,21 +869,22 @@ class Bunny:
 			if temp is False:
 				continue
 			else:
-				temp_len = len(decoded)
-				if temp_len < 18:
+				decoded_len = len(decoded)
+				if decoded_len < 18:
 					decoded = decoded + temp
 				else:
 					if blockget == False:
 						blocks, = struct.unpack("H", decoded[16:18])
 						blockget = True
 						decoded = decoded + temp
-					else:
-						if temp_len > 32*blocks:
-							# might be redundant
-							run = False
-							break
-						else:
-							decoded = decoded + temp
+						decoded_len = len(decoded)
+					elif decoded_len < 32*blocks + 18:
+						decoded = decoded + temp
+						decoded_len = len(decoded)
+					if decoded_len >= 32*blocks + 18:
+						# might be redundant
+						run = False
+						break
 		return self.cryptor.decrypt(decoded)
 			
 def main():
@@ -825,7 +894,7 @@ def main():
 		bunny = Bunny()
 		print "Bunny model built and ready to listen"
 		while True:
-			print bunny.recvBunny2()
+			print bunny.recvBunny()
 	elif sys.argv[1] == "-s":
 		if sys.argv[2] is not None:
 			bunny = Bunny()
