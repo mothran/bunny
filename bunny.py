@@ -314,9 +314,12 @@ class Templates:
 					self.vendors.append([value[:3]])
 				packet = packet[length + 2:]
 				
-			self.SSID = self.tagGrabber("\x00")
+			#self.SSID = self.tagGrabber("\x00")
 			
-			self.injectable = self.tags[len(self.tags) - 2][1] + 4
+			# design problem here, after attempting dynamic lengths for the injection
+			# fields I relized that for interconnectivity between clients I need to hardcode
+			# injection lengths.  So the vendor tag is 24 bytes of data:
+			self.injectable = 24 + 2 + 2
 			
 		def makePacket(self, inject_data):
 			"""
@@ -337,7 +340,7 @@ class Templates:
 			#outbound += struct.pack("!i", zlib.crc32(outbound))
 			
 			outbound = self.resize(outbound)
-			
+			#print "len of injectedBEACON: %d" % len(inject_data)
 			return outbound
 		def resize(self, outpack):
 			"""
@@ -356,7 +359,7 @@ class Templates:
 				tag[1] = len(tag[2])
 			outpack = outpack + tag[0] + struct.pack("B", tag[1]) + tag[2]
 			
-			print len(outpack)
+			#print len(outpack)
 			return outpack
 		
 		def decode(self, input):
@@ -396,9 +399,9 @@ class Templates:
 	class DataQOS:
 		"""
 		
-		Template to hold a example Data packet type, currently we only support encrypted data packets.
-		In the furture, unknown LLC encapilation types can be used with not encrypted modeled traffic.
-				
+		Template to hold a example Data packet type, currently we only support simple LLC
+		packets for injection, encrypted data needs to be included.
+		
 		"""
 		injectable = 0
 		
@@ -426,23 +429,25 @@ class Templates:
 			self.SA = packet[10:16]
 			self.DA = packet[16:22]
 			self.sequence_num = packet[22:24]
-			#self.RS = packet[21:26]
 			self.QOS = packet[24:26]
-			self.crypto = packet[26:34]
-			self.databody = packet[34:]
+			self.databody = packet[26:]
 			
-			self.injectable = 5 + len(self.databody)
+			# FIX THIS:
+			# Temp size is 40 bytes
+			self.injectable = 2 + 40
 			
 		def makePacket(self, inject_data):
 			"""
 			
-			Make a QOS data packet with injected data, fields are: Sequence num, crypto, databody
+			Make a QOS data packet with injected data, fields are: Sequence num and databody
 			
 			"""
-			outbound = self.type + self.frame_control + self.duration+ self.BSSID + self.SA + self.DA + inject_data[0:2]
-			outbound = outbound + self.QOS + inject_data[2:5] + self.crypto[3:] + inject_data[5:]
+			outbound = self.type + self.frame_control + self.duration+ self.BSSID + self.SA + self.DA + inject_data[0:2] + self.QOS
+			
+			outbound = outbound + struct.pack("B", len(inject_data[2:])) + inject_data[2:]
 			
 			outbound = self.resize(outbound)
+			return outbound
 			
 		def resize(self, outpack):
 			
@@ -451,8 +456,10 @@ class Templates:
 			return outpack
 			
 		def decode(self, input):
-			# read the databody up to inject_data - 5
-			return  input[22:24] + input[26:29] + input[34:self.injectable-5]
+			# read the databody up to the size of the byte of length
+			size, = struct.unpack("B", input[26:27])
+			output = input[22:24] + input[27:size+27]
+			return  output
 		
 	class ProbeRequest:
 		"""
@@ -494,11 +501,10 @@ class Templates:
 					self.vendors.append([value[:3]])
 				packet = packet[length + 2:]
 				
-			self.SSID = self.tagGrabber("\x00")
-			
 			# ProbeRequests get the data injected into the ssid's
-			# and are resized by a vendor tag
-			self.injectable = self.SSID[1]
+			# and are resized by a vendor tag, default SSID length is 12, again 
+			# possibly signatureable.
+			self.injectable = 12 + 2
 			
 		def makePacket(self, inject_data):
 			outbound = self.type + self.frame_control + self.duration + self.DA + self.SA + self.BSSID + inject_data[0:2]
@@ -511,17 +517,17 @@ class Templates:
 			"""
 			
 			Resizes the packet with the proper mod / remainder value
-			Primarly uses last vendor tag.
+			Uses last vendor tag.
 			
 			"""
 			# counter will be the size of the tag
 			# using \xdd for vendor tag.
 			if len(self.vendors) == 0:
-				tag = ["\xdd", 0, "" + os.urandom(3)]
+				tag = ["\xdd", 0, os.urandom(3)]
 			else:
 				tag = ["\xdd", 0, self.vendors[random.randrange(0, len(self.vendors))][0]]
 			
-			while( round((len(outpack) + tag[1] + 2 + 13) % modulus, 2) != remainder):
+			while( round( (len(outpack) + tag[1] + 2 + 13) % modulus, 2) != remainder):
 				tag[2] = tag[2] + os.urandom(1)
 				tag[1] = len(tag[2])
 			outpack = outpack + tag[0] + struct.pack("<B", tag[1]) + tag[2]
@@ -530,8 +536,17 @@ class Templates:
 		
 		def decode(self, input):
 			output = input[22:24]
-			size, = struct.unpack("<B", input[25:26])
-			return output + input[26:size]
+			temp_tags = []
+			
+			input = input[24:]
+			while (len(input) != 0):
+				id = input[:1]
+				length, = struct.unpack("B", input[1:2])
+				value = input[2:length+2]
+				temp_tags.append([id, length, value])
+				input = input[length + 2:]
+			value_chunk = temp_tags[0][2]
+			return output + value_chunk
 			
 		def tagGrabber(self, id):
 			"""
@@ -840,6 +855,7 @@ class Bunny:
 			entry = self.model.getEntryFrom(self.model.type_ranges)
 			try:
 				outpacket = entry[2].makePacket(packet[:entry[3]])
+				# Debugging info
 				print "Sending with: %s" % self.model.rawToType(entry[0])
 			except AttributeError:
 				continue
@@ -878,10 +894,10 @@ class Bunny:
 						blockget = True
 						decoded = decoded + temp
 						decoded_len = len(decoded)
-					elif decoded_len < 32*blocks + 18:
+					elif decoded_len < (32*blocks + 18):
 						decoded = decoded + temp
 						decoded_len = len(decoded)
-					if decoded_len >= 32*blocks + 18:
+					if decoded_len >= (32*blocks + 18):
 						# might be redundant
 						run = False
 						break
@@ -918,10 +934,10 @@ def main():
 	elif sys.argv[1] == "-h":
 		for c in range(1,12):
 			chan = c
-			print "Channel: %d" % chan			
+			print "\nChannel: %d" % chan			
 			bunny = Bunny()
 			bunny.model.printTypes()
-			bunny.model.printMacs()
+			#bunny.model.printMacs()
 	else:
 		print "you fail at args"
 		sys.exit()
