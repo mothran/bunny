@@ -23,7 +23,7 @@
 #     
 
 # system imports:  
-import sys, os, time, struct, operator, random, zlib, ConfigParser, hashlib
+import sys, os, time, struct, operator, random, zlib, ConfigParser, hashlib, threading, getpass
 
 # depends:
 import pylorcon
@@ -54,6 +54,8 @@ class Configure:
 		global driver
 		global modulus
 		global remainder
+		global timeout
+		global username
 		
 		config = ConfigParser.RawConfigParser()
 		try:
@@ -61,14 +63,18 @@ class Configure:
 		except IOError:
 			self.makeConfig()
 			config.readfp(open("bunny.conf"))
-			
+		
+		# grab the config varibles, if one is not found, write out the config
 		AESkey = binascii.unhexlify(config.get("AES", "key"))
+		
 		chan = config.getint("readWrite", "channel")
 		iface = config.get("readWrite", "interface")
 		driver = config.get("readWrite", "driver")
 		modulus = config.getfloat("readWrite", "modulus")
 		remainder = config.getfloat("readWrite", "remainder")
+		timeout = config.getint("readWrite", "timeout")
 		
+		username = config.get("chatClient", "username")
 	def makeConfig(self):
 		"""
 		
@@ -76,6 +82,7 @@ class Configure:
 		
 		"""
 		config = ConfigParser.RawConfigParser()
+		
 		config.add_section("AES")
 		config.set("AES", "key", hashlib.sha256("B"*32).hexdigest() )
 		
@@ -85,6 +92,11 @@ class Configure:
 		config.set("readWrite", "driver", "rtl8187")
 		config.set("readWrite", "modulus", 1.23)
 		config.set("readWrite", "remainder", 0.82)
+		config.set("readWrite", "timeout", 5)
+		
+		config.add_section("readWrite")
+		config.set("chatClient", "username", getpass.getuser())
+		
 		with open("bunny.conf", 'wb') as configfile:
 			config.write(configfile)
 	
@@ -531,7 +543,6 @@ class Templates:
 				tag[2] = tag[2] + os.urandom(1)
 				tag[1] = len(tag[2])
 			outpack = outpack + tag[0] + struct.pack("<B", tag[1]) + tag[2]
-			print len(outpack)
 			return outpack
 		
 		def decode(self, input):
@@ -557,6 +568,7 @@ class Templates:
 			for entry in self.tags:
 				if (entry[0] == id):
 					return entry
+					
 class TrafficModel():
 	"""
 	
@@ -824,6 +836,18 @@ class TrafficModel():
 				break
 		return entry;
 
+class TimeoutWarning():
+	"""
+	
+	Homebrew Exception class for packet reading timeouts
+	The timeout config global varible is related to when this class is used.
+	
+	"""
+	def __init__(self, value):
+		self.value = value
+	def __str__(self):
+		return self.value
+
 class Bunny:
 	"""
 	
@@ -856,24 +880,27 @@ class Bunny:
 			try:
 				outpacket = entry[2].makePacket(packet[:entry[3]])
 				# Debugging info
-				print "Sending with: %s" % self.model.rawToType(entry[0])
+				#print "Sending with: %s" % self.model.rawToType(entry[0])
 			except AttributeError:
 				continue
 			packet = packet[entry[3]:]
 			self.inandout.sendPacket(outpacket)
 
 	def recvBunny(self):
+		# Standard calling should look like this:
+		#	try:
+		#		print bunny.recvBunny()
+		#	except TimeoutWarning:
+		#		pass
+		
 		run = True
 		blockget = False
 		type = []
 		decoded = ""
 		
-		# I am so sorry. . 
-		while run:
-			# debuggging: 
-			#print "starting again"
-			#print binascii.hexlify(decoded)
-			
+		first_time = time.time()
+		
+		while run:								
 			encoded = self.inandout.recPacket()
 			for entry in self.model.type_ranges:
 				if entry[0] == encoded[0:1]:
@@ -888,6 +915,7 @@ class Bunny:
 				decoded_len = len(decoded)
 				if decoded_len < 18:
 					decoded = decoded + temp
+					first_time = time.time()
 				else:
 					if blockget == False:
 						blocks, = struct.unpack("H", decoded[16:18])
@@ -895,6 +923,11 @@ class Bunny:
 						decoded = decoded + temp
 						decoded_len = len(decoded)
 					elif decoded_len < (32*blocks + 18):
+						current_time = time.time()
+						if (current_time - first_time) > timeout:
+							print "Timeout hit: %d" % (current_time - first_time)
+							raise TimeoutWarning("The read timed out")
+							break
 						decoded = decoded + temp
 						decoded_len = len(decoded)
 					if decoded_len >= (32*blocks + 18):
@@ -902,15 +935,70 @@ class Bunny:
 						run = False
 						break
 		return self.cryptor.decrypt(decoded)
+
+# quick and dirty threading for the send/rec chat client mode.
+class StdInThread(threading.Thread):
+	# takes the bunny object as an argument
+	def __init__(self, bunny):
+		self.bunny = bunny
+		threading.Thread.__init__(self)
+	def run (self):
+		print "ready to read! (type: /quit to kill)"
+		while 1:
+			input = sys.stdin.readline()
+			if input == "/quit\n":
+				break
+			self.bunny.sendBunny(username + ": " +input)
 			
+class BunnyThread(threading.Thread):
+	# takes the bunny object as an argument
+	def __init__(self, bunny):
+		self.bunny = bunny
+		threading.Thread.__init__(self)
+	def run (self):
+		# Standard calling should look like this:
+		while 1:
+			try:
+				text = self.bunny.recvBunny()
+				if text.split(":")[0] == username:
+					continue
+				else:
+					print text
+			except TimeoutWarning:
+				pass
+
+def usage():
+	"""
+	
+	print out usage
+	
+	"""
+	print "Bunny.py [COMANDS]"
+	print "-l\t\t--\tListen mode, gets packets and prints data"
+	print "-s [data]\t--\tSend mode, sends packets over and over"
+	print "-m\t\t--\tPassive profiling of all the channels (1-11)"
+	print "-c\t\t--\tChat client mode"
+	
 def main():
+	"""
+	
+	main func, needs better argument handeling.
+	
+	"""
+	
+	if len(sys.argv) < 2:
+		usage()
+		sys.exit()
 	if sys.argv[1] == "-l":
 		print "Bunny in listen mode"
 		print "Building model: . . . "
 		bunny = Bunny()
 		print "Bunny model built and ready to listen"
 		while True:
-			print bunny.recvBunny()
+			try:
+				print bunny.recvBunny()
+			except TimeoutWarning:
+				pass
 	elif sys.argv[1] == "-s":
 		if sys.argv[2] is not None:
 			bunny = Bunny()
@@ -929,9 +1017,31 @@ def main():
 				elif input == "N\n" or input == "n\n":
 					sys.exit()
 		else:
-			print "you fail, include a messge to send" 
+			print usage()
 			sys.exit()
-	elif sys.argv[1] == "-h":
+	elif sys.argv[1] == "-c":
+		print "chat client mode:"
+		print "building traffic model: . . "
+		bunny = Bunny()
+		print "built traffic model!"
+		print "starting threads: "
+		
+		# create list of threads
+		# one thread for input and the other for output.
+		# both use stdin or stdout
+		workers = [StdInThread(bunny), BunnyThread(bunny)]
+		for worker in workers:
+			worker.setDaemon(True)
+			worker.start()
+		
+		# loop through every 2 seconds and check for dead threads
+		while True:
+			for worker in workers:
+				if not worker.isAlive():
+					sys.exit()
+			time.sleep(3)
+		
+	elif sys.argv[1] == "-m":
 		for c in range(1,12):
 			chan = c
 			print "\nChannel: %d" % chan			
@@ -939,7 +1049,7 @@ def main():
 			bunny.model.printTypes()
 			#bunny.model.printMacs()
 	else:
-		print "you fail at args"
+		usage()
 		sys.exit()
 
 if __name__ == "__main__":
