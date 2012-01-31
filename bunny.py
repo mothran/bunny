@@ -471,8 +471,7 @@ class Templates:
 			# read the databody up to the size of the byte of length
 			size, = struct.unpack("B", input[26:27])
 			output = input[22:24] + input[27:size+27]
-			return  output
-		
+			return  output		
 	class ProbeRequest:
 		"""
 		
@@ -898,10 +897,9 @@ class Bunny:
 		type = []
 		decoded = ""
 		
-		first_time = time.time()
-		
 		while run:								
 			encoded = self.inandout.recPacket()
+			first_time = time.time()
 			for entry in self.model.type_ranges:
 				if entry[0] == encoded[0:1]:
 					if entry[3] > 0:
@@ -912,10 +910,13 @@ class Bunny:
 			if temp is False:
 				continue
 			else:
+				if (time.time() - first_time) > timeout:
+					print "Timeout hit: %d" % (current_time - first_time)
+					raise TimeoutWarning("The read timed out")
+					break
 				decoded_len = len(decoded)
 				if decoded_len < 18:
 					decoded = decoded + temp
-					first_time = time.time()
 				else:
 					if blockget == False:
 						blocks, = struct.unpack("H", decoded[16:18])
@@ -923,11 +924,6 @@ class Bunny:
 						decoded = decoded + temp
 						decoded_len = len(decoded)
 					elif decoded_len < (32*blocks + 18):
-						current_time = time.time()
-						if (current_time - first_time) > timeout:
-							print "Timeout hit: %d" % (current_time - first_time)
-							raise TimeoutWarning("The read timed out")
-							break
 						decoded = decoded + temp
 						decoded_len = len(decoded)
 					if decoded_len >= (32*blocks + 18):
@@ -945,10 +941,11 @@ class StdInThread(threading.Thread):
 	def run (self):
 		print "ready to read! (type: /quit to kill)"
 		while 1:
-			input = sys.stdin.readline()
-			if input == "/quit\n":
+			input = sys.stdin.readline().strip("\n")
+			if input == "/quit":
 				break
-			self.bunny.sendBunny(username + ": " +input)
+			# send with username and a trailer to prevent the stripping of 'A's as padding
+			self.bunny.sendBunny(username + ": " + input + "\xff")
 			
 class BunnyThread(threading.Thread):
 	# takes the bunny object as an argument
@@ -963,7 +960,7 @@ class BunnyThread(threading.Thread):
 				if text.split(":")[0] == username:
 					continue
 				else:
-					print text
+					print text.rstrip("\xff")
 			except TimeoutWarning:
 				pass
 
