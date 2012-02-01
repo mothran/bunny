@@ -213,7 +213,7 @@ class SendRec:
 		while(run):
 			header, rawPack = self.pcapy.next()
 			size = len(rawPack)
-			if (round(size % modulus, 2) == remainder):
+			if (round( size % modulus, 2) == remainder):
 				run = False
 				# H = unsigned short
 				size = struct.unpack("<H", rawPack[2:4])
@@ -333,6 +333,9 @@ class Templates:
 			
 			# loop through the tags and SAP them off into in the tags array
 			# also appends any vendor OUI's into the vendors list.
+			
+			# this might be the place we have an error with comp to comp sending.
+			# due to the fact it tries read past the end of the.
 			while (len(packet) != 0):
 				id = packet[:1]
 				length, = struct.unpack("B", packet[1:2])
@@ -935,6 +938,7 @@ class Bunny:
 		
 		while run:								
 			encoded = self.inandout.recPacket()
+			#print "hit packet"
 			first_time = time.time()
 			for entry in self.model.type_ranges:
 				if entry[0] == encoded[0:1]:
