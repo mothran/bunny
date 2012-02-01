@@ -33,6 +33,9 @@ from pcapy import open_live
 # testing imports:
 import binascii
 
+# Radiotap length global varible
+RADIOTAPLEN = 13
+
 
 class Configure:
 	"""
@@ -223,7 +226,7 @@ class SendRec:
 		data = "\x00\x00\x00\x00" + data
 		
 		# Create a packet with proper length, add radiotap header length + zeros.
-		while( round((len(data) + 13) % modulus, 2) != remainder):
+		while( round((len(data) + RADIOTAPLEN) % modulus, 2) != remainder):
 			data = data + os.urandom(1);
 		self.lorcon.txpacket(data)
 	def recPacketDurFix(self):
@@ -379,12 +382,11 @@ class Templates:
 			# using \xdd for vendor tag.
 			tag = ["\xdd", 0, self.vendors[random.randrange(0, len(self.vendors))][0]]
 			
-			while( round((len(outpack) + tag[1] + 2 + 13) % modulus, 2) != remainder):
+			while( round((len(outpack) + tag[1] + 2 + RADIOTAPLEN) % modulus, 2) != remainder):
 				tag[2] = tag[2] + os.urandom(1)
 				tag[1] = len(tag[2])
 			outpack = outpack + tag[0] + struct.pack("B", tag[1]) + tag[2]
 			
-			#print len(outpack)
 			return outpack
 		
 		def decode(self, input):
@@ -476,7 +478,7 @@ class Templates:
 			
 		def resize(self, outpack):
 			
-			while(round( (len(outpack) + 13) % modulus, 2) != remainder):
+			while(round( (len(outpack) + RADIOTAPLEN) % modulus, 2) != remainder):
 				outpack = outpack + os.urandom(1)
 			return outpack
 			
@@ -557,7 +559,7 @@ class Templates:
 			else:
 				tag = ["\xdd", 0, self.vendors[random.randrange(0, len(self.vendors))][0]]
 			
-			while( round( (len(outpack) + tag[1] + 2 + 13) % modulus, 2) != remainder):
+			while( round( (len(outpack) + tag[1] + 2 + RADIOTAPLEN) % modulus, 2) != remainder):
 				tag[2] = tag[2] + os.urandom(1)
 				tag[1] = len(tag[2])
 			outpack = outpack + tag[0] + struct.pack("<B", tag[1]) + tag[2]

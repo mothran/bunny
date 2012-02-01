@@ -1,0 +1,12 @@
+download lorcon-old:
+svn co http://802.11ninja.net/svn/lorcon/branch/lorcon-old lorcon
+
+cd lorcon
+configure --prefix=/usr
+make
+make install
+
+Download pylorcon (not pylorcon2)
+sudo python setup.py install
+
+repeat for pcapy and pcrypto
