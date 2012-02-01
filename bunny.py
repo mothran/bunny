@@ -48,7 +48,9 @@ class Configure:
 		
 		"""
 		
+		# All config varibles are global varibles.
 		global AESkey
+		global caplength
 		global chan
 		global iface
 		global driver
@@ -66,6 +68,8 @@ class Configure:
 		
 		# grab the config varibles, if one is not found, write out the config
 		AESkey = binascii.unhexlify(config.get("AES", "key"))
+		
+		caplength = config.getint("trafficModel", "caplength")
 		
 		chan = config.getint("readWrite", "channel")
 		iface = config.get("readWrite", "interface")
@@ -85,6 +89,9 @@ class Configure:
 		
 		config.add_section("AES")
 		config.set("AES", "key", hashlib.sha256("B"*32).hexdigest() )
+		
+		config.add_section("trafficModel")
+		config.set("trafficModel", "caplength", 3)
 		
 		config.add_section("readWrite")
 		config.set("readWrite", "channel", 8)
@@ -185,6 +192,12 @@ class SendRec:
 			print "Error creating pcapy descriptor, try turning on the target interface or setting it to monitor mode"
 	
 	def updateChan(self, channel):
+		"""
+		
+		Updates the current channel
+		
+		"""
+		
 		self.lorcon.setchannel(channel)
 	
 	# These send/rec functions should be used in hidden / paranoid mode.
@@ -518,6 +531,12 @@ class Templates:
 			self.injectable = 12 + 2
 			
 		def makePacket(self, inject_data):
+			"""
+			
+			Creates a packet with injected encrypted data.
+			
+			"""
+			
 			outbound = self.type + self.frame_control + self.duration + self.DA + self.SA + self.BSSID + inject_data[0:2]
 			outbound = outbound + "\x00" + struct.pack("<B", len(inject_data[2:])) + inject_data[2:] 
 			for i in range(1, len(self.tags)-1):
@@ -545,6 +564,12 @@ class Templates:
 			return outpack
 		
 		def decode(self, input):
+			"""
+			
+			Decodes the encrypted data out of the inputed packet
+			
+			"""
+			
 			output = input[22:24]
 			temp_tags = []
 			
@@ -574,10 +599,6 @@ class TrafficModel():
 	Builds a model of current traffic that can be used at a later time to make packets.
 	
 	"""
-	
-	# the time used for capturing a model of the 802.11 traffic
-	time = 3
-	
 	# In network byte order
 	# If you do a lookup on this table and dont find a match it is probly
 	# a 'reserved' type.
@@ -640,6 +661,11 @@ class TrafficModel():
 	mac_addresses = []
 	
 	def __init__(self):
+		"""
+		
+		Starts up the model, collects data and inserts it into its respective lists
+		
+		"""
 		# clear any old data
 		self.mac_addresses = []
 		self.type_ranges = []
@@ -660,7 +686,9 @@ class TrafficModel():
 		"""
 		start_time = time.time()
 		current_time = start_time
-		while ( (current_time - start_time) < self.time):
+		
+		# caplength is a glocal var from config.
+		while ( (current_time - start_time) < caplength):
 			packet = self.interface.recvRaw()
 			self.data.append(packet)
 			current_time = time.time()
@@ -886,6 +914,12 @@ class Bunny:
 			self.inandout.sendPacket(outpacket)
 
 	def recvBunny(self):
+		"""
+		
+		Read and decode loop for bunny, raises a TimeoutWarning if it times out.
+		
+		"""
+		
 		# Standard calling should look like this:
 		#	try:
 		#		print bunny.recvBunny()
@@ -934,6 +968,11 @@ class Bunny:
 
 # quick and dirty threading for the send/rec chat client mode.
 class StdInThread(threading.Thread):
+	"""
+	
+	Thread class for reading from STDIN
+	
+	"""
 	# takes the bunny object as an argument
 	def __init__(self, bunny):
 		self.bunny = bunny
@@ -945,9 +984,15 @@ class StdInThread(threading.Thread):
 			if input == "/quit":
 				break
 			# send with username and a trailer to prevent the stripping of 'A's as padding
+			# see the comment in the __init__() in AEScrypt
 			self.bunny.sendBunny(username + ": " + input + "\xff")
 			
 class BunnyThread(threading.Thread):
+	"""
+	
+	Thread class for reading from the bunny interface
+	
+	"""
 	# takes the bunny object as an argument
 	def __init__(self, bunny):
 		self.bunny = bunny
@@ -957,9 +1002,13 @@ class BunnyThread(threading.Thread):
 		while 1:
 			try:
 				text = self.bunny.recvBunny()
+				
+				# if we get our own username do not display it,
+				# FIX THIS
 				if text.split(":")[0] == username:
 					continue
 				else:
+					# strip out the ending char.
 					print text.rstrip("\xff")
 			except TimeoutWarning:
 				pass
@@ -1027,11 +1076,12 @@ def main():
 		# one thread for input and the other for output.
 		# both use stdin or stdout
 		workers = [StdInThread(bunny), BunnyThread(bunny)]
+		
 		for worker in workers:
 			worker.setDaemon(True)
 			worker.start()
 		
-		# loop through every 2 seconds and check for dead threads
+		# loop through every 3 seconds and check for dead threads
 		while True:
 			for worker in workers:
 				if not worker.isAlive():
