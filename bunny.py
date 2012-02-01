@@ -23,7 +23,7 @@
 #     
 
 # system imports:  
-import sys, os, time, struct, operator, random, zlib, ConfigParser, hashlib, threading, getpass
+import sys, os, time, struct, operator, random, ConfigParser, hashlib, threading, getpass
 
 # depends:
 import pylorcon
@@ -1070,6 +1070,8 @@ def main():
 		print "building traffic model: . . "
 		bunny = Bunny()
 		print "built traffic model!"
+		bunny.model.printTypes()
+		bunny.model.printMacs()
 		print "starting threads: "
 		
 		# create list of threads
