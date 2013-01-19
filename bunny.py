@@ -23,7 +23,7 @@
 #     
 
 # system imports:  
-import sys, os, time, struct, operator, random, ConfigParser, hashlib, threading, getpass
+import sys, os, time, struct, operator, random, ConfigParser, hashlib, threading, getpass, getopt
 
 # depends:
 import pylorcon
@@ -44,7 +44,9 @@ class Configure:
 	
 	"""
 	
-	def __init__(self):
+	fileName = ""
+	
+	def __init__(self, file_name):
 		"""
 		
 		Reads the config file, if the file does not exist, create it with defaults.
@@ -62,12 +64,14 @@ class Configure:
 		global timeout
 		global username
 		
+		self.fileName = file_name
+		
 		config = ConfigParser.RawConfigParser()
 		try:
-			config.readfp(open("bunny.conf"))
+			config.readfp(open(self.fileName))
 		except IOError:
 			self.makeConfig()
-			config.readfp(open("bunny.conf"))
+			config.readfp(open(self.fileName))
 		
 		# grab the config varibles, if one is not found, write out the config
 		AESkey = binascii.unhexlify(config.get("AES", "key"))
@@ -104,10 +108,10 @@ class Configure:
 		config.set("readWrite", "remainder", 0.82)
 		config.set("readWrite", "timeout", 5)
 		
-		config.add_section("readWrite")
+		config.add_section("chatClient")
 		config.set("chatClient", "username", getpass.getuser())
 		
-		with open("bunny.conf", 'wb') as configfile:
+		with open(self.fileName, 'wb') as configfile:
 			config.write(configfile)
 	
 class AEScrypt:
@@ -887,14 +891,14 @@ class Bunny:
 	
 	"""
 		
-	def __init__(self):
+	def __init__(self, filename = "bunny.conf"):
 		"""
 		
 		Setup and build the bunny model
 		
 		"""
 		
-		self.config = Configure()
+		self.config = Configure(filename)
 		self.inandout = SendRec()
 		self.cryptor = AEScrypt()
 		self.model = TrafficModel()
@@ -1030,52 +1034,70 @@ def usage():
 	print "-s [data]\t--\tSend mode, sends packets over and over"
 	print "-m\t\t--\tPassive profiling of all the channels (1-11)"
 	print "-c\t\t--\tChat client mode"
-	
+
 def main():
-	"""
-	
-	main func, needs better argument handeling.
-	
-	"""
-	
-	if len(sys.argv) < 2:
+	# Default config file name, this is mirrored in Configure's init() arg.
+	config_file = "bunny.conf"
+	listen_mode = send_mode = scan_chans_mode = chat_mode = False
+	# parse arguments
+	try:
+		opts, args = getopt.getopt(sys.argv[1:],"hlcms:f:")
+	except getopt.GetoptError as err:
+		print str(err)
 		usage()
-		sys.exit()
-	if sys.argv[1] == "-l":
+		sys.exit(1)
+	for opt, arg in opts:
+		if opt == "-h":
+			usage()
+			sys.exit(0)
+		elif opt == "-f":
+			config_file = arg
+		elif opt == "-l": 
+			listen_mode = True
+		elif opt == "-s":
+			send_mode = True
+			send_data = arg
+		elif opt == "-m":
+			scan_chans_mode = True
+		elif opt == "-c":
+			chat_mode = True
+			
+	if listen_mode:
 		print "Bunny in listen mode"
 		print "Building model: . . . "
-		bunny = Bunny()
+		bunny = Bunny(config_file)
 		print "Bunny model built and ready to listen"
 		while True:
 			try:
 				print bunny.recvBunny()
 			except TimeoutWarning:
 				pass
-	elif sys.argv[1] == "-s":
-		if sys.argv[2] is not None:
-			bunny = Bunny()
+	elif send_mode:
+		if send_data is not None:
+			bunny = Bunny(config_file)
 			print "Bunny model built"
 			bunny.model.printTypes()
 			bunny.model.printMacs()
-			print "sending message: %s" % sys.argv[2]
-			bunny.sendBunny(sys.argv[2])
+			print "sending message: %s" % send_data
+			bunny.sendBunny(send_data)
 			
 			while True:
 				print "again? [Y/N]"
 				input = sys.stdin.readline()
 				if input == "Y\n" or input == "y\n":
-					print "sending message: %s" % sys.argv[2]
-					bunny.sendBunny(sys.argv[2])
+					print "sending message: %s" % send_data
+					bunny.sendBunny(send_data)
 				elif input == "N\n" or input == "n\n":
 					sys.exit()
 		else:
 			print usage()
 			sys.exit()
-	elif sys.argv[1] == "-c":
+
+	elif chat_mode:
 		print "chat client mode:"
 		print "building traffic model: . . "
-		bunny = Bunny()
-		print "built traffic model!"
+		bunny = Bunny(config_file)
+		print "built traffic model"
 		bunny.model.printTypes()
 		bunny.model.printMacs()
 		print "starting threads: "
@@ -1096,16 +1118,16 @@ def main():
 					sys.exit()
 			time.sleep(3)
 		
-	elif sys.argv[1] == "-m":
+	elif scan_chans_mode:
 		for c in range(1,12):
 			chan = c
 			print "\nChannel: %d" % chan			
-			bunny = Bunny()
+			bunny = Bunny(config_file)
 			bunny.model.printTypes()
 			#bunny.model.printMacs()
 	else:
 		usage()
 		sys.exit()
-
+		
 if __name__ == "__main__":
 	main()
