@@ -34,7 +34,7 @@ from pcapy import open_live
 import binascii
 
 # Radiotap length global varible
-RADIOTAPLEN = 13
+RADIOTAPLEN = 30
 
 
 class Configure:
@@ -62,6 +62,7 @@ class Configure:
 		global modulus
 		global remainder
 		global timeout
+		global debug
 		global username
 		
 		self.fileName = file_name
@@ -84,6 +85,7 @@ class Configure:
 		modulus = config.getfloat("readWrite", "modulus")
 		remainder = config.getfloat("readWrite", "remainder")
 		timeout = config.getint("readWrite", "timeout")
+		debug = config.getboolean("readWrite", "debug")
 		
 		username = config.get("chatClient", "username")
 	def makeConfig(self):
@@ -107,6 +109,7 @@ class Configure:
 		config.set("readWrite", "modulus", 1.23)
 		config.set("readWrite", "remainder", 0.82)
 		config.set("readWrite", "timeout", 5)
+		config.set("readWrite", "debug", 0)
 		
 		config.add_section("chatClient")
 		config.set("chatClient", "username", getpass.getuser())
@@ -175,8 +178,9 @@ class SendRec:
 	def __init__(self):		
 		try:
 			self.lorcon = pylorcon.Lorcon(iface, driver)
-		except:
-			print "Error creating lorcon object, try running as root"
+		except pylorcon.LorconError as err:
+			print "Error creating lorcon object: "
+			print str(err)
 			exit()
 		
 		# check for monitor mode, if not already in monitor mode, make it.
@@ -216,12 +220,12 @@ class SendRec:
 		run = True 
 		while(run):
 			header, rawPack = self.pcapy.next()
-			size = len(rawPack)
+			size = len(rawPack)			
 			if (round( size % modulus, 2) == remainder):
 				run = False
 				# H = unsigned short
 				size = struct.unpack("<H", rawPack[2:4])
-				size = int(size[0])
+				size = int(size[0])				
 				rawPack = rawPack[size:]
 				return rawPack
 	
@@ -387,12 +391,15 @@ class Templates:
 			"""
 			# counter will be the size of the tag
 			# using \xdd for vendor tag.
+			#print self.vendors
 			tag = ["\xdd", 0, self.vendors[random.randrange(0, len(self.vendors))][0]]
 			
 			while( round((len(outpack) + tag[1] + 2 + RADIOTAPLEN) % modulus, 2) != remainder):
 				tag[2] = tag[2] + os.urandom(1)
 				tag[1] = len(tag[2])
-			outpack = outpack + tag[0] + struct.pack("B", tag[1]) + tag[2]
+			
+			# + 4 if for eating the checksum that for w/e reason gets parsed as a tag.	
+			outpack = outpack + tag[0] + struct.pack("B", tag[1]+4) + tag[2]
 			
 			return outpack
 		
@@ -417,6 +424,8 @@ class Templates:
 			#if value_chunk == self.tags[len(self.tags)-2]:
 			#	return False
 			
+			#if debug:
+			#	print "Value_chuck: " + binascii.hexlify(value_chunk)
 			output = output + value_chunk
 			
 			return output
@@ -911,17 +920,24 @@ class Bunny:
 		"""
 		
 		packet = self.cryptor.encrypt(packet)
+		if debug:
+			print "CypherText: " + binascii.hexlify(packet)
+			print "blocks: " + binascii.hexlify(packet[16:18])
+		
 		while ( len(packet) != 0 ):
 			entry = self.model.getEntryFrom(self.model.type_ranges)
 			try:
 				outpacket = entry[2].makePacket(packet[:entry[3]])
-				# Debugging info
-				#print "Sending with: %s" % self.model.rawToType(entry[0])
+				if debug:
+					print "Sending with: %s" % self.model.rawToType(entry[0])
+					print "length: " + str(len(outpacket))
+				
 			except AttributeError:
 				continue
 			packet = packet[entry[3]:]
 			self.inandout.sendPacket(outpacket)
-
+			time.sleep(0.05)
+			
 	def recvBunny(self):
 		"""
 		
@@ -935,23 +951,37 @@ class Bunny:
 		#	except TimeoutWarning:
 		#		pass
 		
-		run = True
 		blockget = False
 		type = []
 		decoded = ""
 		
-		while run:								
+		while True:								
 			encoded = self.inandout.recPacket()
-			#print "hit packet"
+			
+			if debug:
+				print "\nHit packet"
+				
 			first_time = time.time()
+			
+			if debug:
+				print "Type: %s\t Raw: %s" % (binascii.hexlify(encoded[0:1]), self.model.rawToType(encoded[0:1]))
+			
 			for entry in self.model.type_ranges:
 				if entry[0] == encoded[0:1]:
 					if entry[3] > 0:
+						# check so that the injectable length is over 0
 						type = entry
 			if len(type) < 2:
+				if debug:
+					print "Packet not in templates"
 				continue
 			temp = type[2].decode(encoded)
+			if debug:
+				print "In CypherText: " + binascii.hexlify(temp)
+			
 			if temp is False:
+				if debug:
+					print "decoding fail"
 				continue
 			else:
 				if (time.time() - first_time) > timeout:
@@ -964,6 +994,9 @@ class Bunny:
 				else:
 					if blockget == False:
 						blocks, = struct.unpack("H", decoded[16:18])
+						
+						if debug:
+							print "blocks: " + str(blocks)
 						blockget = True
 						decoded = decoded + temp
 						decoded_len = len(decoded)
@@ -972,9 +1005,10 @@ class Bunny:
 						decoded_len = len(decoded)
 					if decoded_len >= (32*blocks + 18):
 						# might be redundant
-						run = False
-						break
-		return self.cryptor.decrypt(decoded)
+						if debug:
+							print "Ending the loop"
+						return self.cryptor.decrypt(decoded)
+		
 
 # quick and dirty threading for the send/rec chat client mode.
 class StdInThread(threading.Thread):
@@ -1030,18 +1064,21 @@ def usage():
 	
 	"""
 	print "Bunny.py [COMANDS]"
-	print "-l\t\t--\tListen mode, gets packets and prints data"
-	print "-s [data]\t--\tSend mode, sends packets over and over"
-	print "-m\t\t--\tPassive profiling of all the channels (1-11)"
-	print "-c\t\t--\tChat client mode"
+	print "  -l              --   Listen mode, gets packets and prints data"
+	print "  -s [data]       --   Send mode, sends packets over and over"
+	print "  -m              --   Passive profiling of all the channels (1-11)"
+	print "  -c              --   Chat client mode"
+	print "  -f [filename]   --   Specify a config file to be loaded"
+	print "  -r              --   Reloop shows the mod/remainder of the specified channel"
 
 def main():
 	# Default config file name, this is mirrored in Configure's init() arg.
 	config_file = "bunny.conf"
-	listen_mode = send_mode = scan_chans_mode = chat_mode = False
+	listen_mode = send_mode = scan_chans_mode = chat_mode = reloop_mode = False
+	
 	# parse arguments
 	try:
-		opts, args = getopt.getopt(sys.argv[1:],"hlcms:f:")
+		opts, args = getopt.getopt(sys.argv[1:],"hlcrms:f:")
 	except getopt.GetoptError as err:
 		print str(err)
 		usage()
@@ -1054,6 +1091,8 @@ def main():
 			config_file = arg
 		elif opt == "-l": 
 			listen_mode = True
+		elif opt == "-r":
+			reloop_mode = True
 		elif opt == "-s":
 			send_mode = True
 			send_data = arg
@@ -1072,6 +1111,10 @@ def main():
 				print bunny.recvBunny()
 			except TimeoutWarning:
 				pass
+	elif reloop_mode:
+		bunny = Bunny(config_file)
+		bunny.inandout.reloop()
+		
 	elif send_mode:
 		if send_data is not None:
 			bunny = Bunny(config_file)
@@ -1092,11 +1135,12 @@ def main():
 		else:
 			print usage()
 			sys.exit()
-
+			
 	elif chat_mode:
 		print "chat client mode:"
 		print "building traffic model: . . "
 		bunny = Bunny(config_file)
+		
 		print "built traffic model"
 		bunny.model.printTypes()
 		bunny.model.printMacs()
