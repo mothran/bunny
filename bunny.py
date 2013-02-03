@@ -208,7 +208,6 @@ class SendRec:
 		Updates the current channel
 		
 		"""
-		
 		self.lorcon.setchannel(channel)
 	
 	# These send/rec functions should be used in hidden / paranoid mode.
@@ -960,8 +959,6 @@ class Bunny:
 			
 			if debug:
 				print "\nHit packet"
-				
-			first_time = time.time()
 			
 			if debug:
 				print "Type: %s\t Raw: %s" % (binascii.hexlify(encoded[0:1]), self.model.rawToType(encoded[0:1]))
@@ -984,15 +981,12 @@ class Bunny:
 					print "decoding fail"
 				continue
 			else:
-				if (time.time() - first_time) > timeout:
-					print "Timeout hit: %d" % (current_time - first_time)
-					raise TimeoutWarning("The read timed out")
-					break
 				decoded_len = len(decoded)
 				if decoded_len < 18:
 					decoded = decoded + temp
 				else:
 					if blockget == False:
+						first_time = time.time()
 						blocks, = struct.unpack("H", decoded[16:18])
 						
 						if debug:
@@ -1003,6 +997,11 @@ class Bunny:
 					elif decoded_len < (32*blocks + 18):
 						decoded = decoded + temp
 						decoded_len = len(decoded)
+						
+					if (time.time() - first_time) > timeout:
+						print "Timeout hit"
+						raise TimeoutWarning("The read timed out")
+						break
 					if decoded_len >= (32*blocks + 18):
 						# might be redundant
 						if debug:
