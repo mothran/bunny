@@ -997,7 +997,6 @@ class Bunny:
 					elif decoded_len < (32*blocks + 18):
 						decoded = decoded + temp
 						decoded_len = len(decoded)
-						
 					if (time.time() - first_time) > timeout:
 						print "Timeout hit"
 						raise TimeoutWarning("The read timed out")
@@ -1022,7 +1021,7 @@ class StdInThread(threading.Thread):
 		threading.Thread.__init__(self)
 	def run (self):
 		print "ready to read! (type: /quit to kill)"
-		while 1:
+		while True:
 			input = sys.stdin.readline().strip("\n")
 			if input == "/quit":
 				break
@@ -1073,11 +1072,11 @@ def usage():
 def main():
 	# Default config file name, this is mirrored in Configure's init() arg.
 	config_file = "bunny.conf"
-	listen_mode = send_mode = scan_chans_mode = chat_mode = reloop_mode = False
+	listen_mode = send_mode = scan_chans_mode = chat_mode = ping_mode = reloop_mode = False
 	
 	# parse arguments
 	try:
-		opts, args = getopt.getopt(sys.argv[1:],"hlcrms:f:")
+		opts, args = getopt.getopt(sys.argv[1:],"hlcrmps:f:")
 	except getopt.GetoptError as err:
 		print str(err)
 		usage()
@@ -1099,6 +1098,8 @@ def main():
 			scan_chans_mode = True
 		elif opt == "-c":
 			chat_mode = True
+		elif opt == "-p":
+			ping_mode = True
 			
 	if listen_mode:
 		print "Bunny in listen mode"
@@ -1168,6 +1169,20 @@ def main():
 			bunny = Bunny(config_file)
 			bunny.model.printTypes()
 			#bunny.model.printMacs()
+	elif ping_mode:
+		bunny = Bunny(config_file)
+		print "Model completed, ready to play pong"
+		while True:
+			try:
+				text = bunny.recvBunny()
+				#print text.rstrip("\xff")
+				if text.find("ping") != -1:
+					bunny.sendBunny("CNC:pong\xff")
+					print "Pong sent"
+				
+			except TimeoutWarning:
+				pass
+		
 	else:
 		usage()
 		sys.exit()
