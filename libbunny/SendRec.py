@@ -1,4 +1,4 @@
-import struct, os
+import struct, os, time
 
 import pylorcon
 from pcapy import open_live
@@ -28,6 +28,8 @@ class SendRec:
 		self.lorcon.setfunctionalmode("INJECT");
 		self.lorcon.setchannel(CHANNEL);
 		
+		# This sleep exists to wait for the changes of mode to be pushed to the interface
+		time.sleep(1)
 		# Quick definitions for pcapy
 		MAX_LEN      = 1514		# max size of packet to capture
 		PROMISCUOUS  = 1		# promiscuous mode?
