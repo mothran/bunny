@@ -1,4 +1,4 @@
-import struct
+import struct, os
 
 import pylorcon
 from pcapy import open_live
