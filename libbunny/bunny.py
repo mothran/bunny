@@ -83,7 +83,7 @@ class Bunny:
 				continue
 			packet = packet[entry[3]:]
 			self.inandout.sendPacket(outpacket)
-			time.sleep(0.05)
+			time.sleep(0.1)
 			
 	def recvBunny(self):
 		"""
@@ -95,7 +95,7 @@ class Bunny:
 		# Standard calling should look like this:
 		#	try:
 		#		print bunny.recvBunny()
-		#	except TimeoutWarning:
+		#	except libbunny.TimeoutWarning:
 		#		pass
 		
 		blockget = False

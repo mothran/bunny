@@ -171,16 +171,16 @@ class BunnyThread(threading.Thread):
 		while 1:
 			try:
 				text = self.bunny.recvBunny()
-				
-				# if we get our own UserName do not display it,
-				# FIX THIS
-				if text.split(":")[0] == self.username:
-					continue
-				else:
-					# strip out the ending char.
-					print text.rstrip("\xff")
 			except libbunny.TimeoutWarning:
-				pass
+				continue
+			# if we get our own UserName do not display it,
+			# FIX THIS
+			if text.split(":")[0] == self.username:
+				continue
+			else:
+				# strip out the ending char.
+				print text.rstrip("\xff")
+				
 		
 if __name__ == "__main__":
 	main()

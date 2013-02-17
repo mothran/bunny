@@ -9,4 +9,6 @@ make install
 Download pylorcon (not pylorcon2)
 sudo python setup.py install
 
-repeat for pcapy and pcrypto
+repeat for:
+ -pcapy
+ -pcrypto

@@ -21,15 +21,16 @@ class SendRec:
 		
 		# check for monitor mode, if not already in monitor mode, make it.
 		if (self.lorcon.getmode() != "MONITOR"):
-			os.system("ifconfig " + IFACE + " down");
-			self.lorcon.setmode("MONITOR");
-			os.system("ifconfig " + IFACE + " up");
+			os.system("ifconfig " + IFACE + " down")
+			self.lorcon.setmode("MONITOR")
+			os.system("ifconfig " + IFACE + " up")
+			
+			#This sleep exists to wait for the changes of mode to be pushed to the interface
+			time.sleep(1)
 		
-		self.lorcon.setfunctionalmode("INJECT");
-		self.lorcon.setchannel(CHANNEL);
+		self.lorcon.setfunctionalmode("INJECT")
+		self.lorcon.setchannel(CHANNEL)
 		
-		# This sleep exists to wait for the changes of mode to be pushed to the interface
-		time.sleep(1)
 		# Quick definitions for pcapy
 		MAX_LEN      = 1514		# max size of packet to capture
 		PROMISCUOUS  = 1		# promiscuous mode?
@@ -72,7 +73,7 @@ class SendRec:
 		
 		# Create a packet with proper length, add radiotap header length + zeros.
 		while( round((len(data) + RADIOTAPLEN) % MODULUS, 2) != remainder):
-			data = data + os.urandom(1);
+			data = data + os.urandom(1)
 		self.lorcon.txpacket(data)
 	def recPacketDurFix(self):
 		# return the raw packet if the mod/remain value is correct. 
