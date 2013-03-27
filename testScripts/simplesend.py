@@ -3,7 +3,7 @@ import sys
 import pylorcon
 
 try:
-	lorcon = pylorcon.Lorcon("wlan0", "rtl8187")
+	lorcon = pylorcon.Lorcon("wlan3", "ath9k_htc")
 except pylorcon.LorconError:
 	print "Please run me as root"
 	

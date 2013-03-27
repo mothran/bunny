@@ -58,7 +58,7 @@ class SendRec:
 		run = True 
 		while(run):
 			header, rawPack = self.pcapy.next()
-			size = len(rawPack)			
+			size = len(rawPack)
 			if (round( size % MODULUS, 2) == REMAINDER):
 				run = False
 				# H = unsigned short
