@@ -55,12 +55,10 @@ class SendRec:
 			self.lorcon.txpacket(data)
 	def recPacket(self):
 		# return the raw packet if the mod/remain value is correct. 
-		run = True 
-		while(run):
+		while(True):
 			header, rawPack = self.pcapy.next()
 			size = len(rawPack)
 			if (round( size % MODULUS, 2) == REMAINDER):
-				run = False
 				# H = unsigned short
 				size = struct.unpack("<H", rawPack[2:4])
 				size = int(size[0])				
