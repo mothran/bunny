@@ -53,10 +53,7 @@ def main():
 		bunny = libbunny.Bunny()
 		print "Bunny model built and ready to listen"
 		while True:
-			try:
-				print bunny.recvBunny()
-			except libbunny.TimeoutWarning:
-				pass
+			print bunny.recvBunny()
 	elif reloop_mode:
 		bunny = libbunny.Bunny()
 		bunny.inandout.reloop()
@@ -119,15 +116,11 @@ def main():
 		bunny = libbunny.Bunny()
 		print "Model completed, ready to play pong"
 		while True:
-			try:
-				text = bunny.recvBunny()
-				#print text.rstrip("\xff")
-				if text.find("ping") != -1:
-					bunny.sendBunny("CNC:pong\xff")
-					print "Pong sent"
-				
-			except libbunny.TimeoutWarning:
-				pass
+			text = bunny.recvBunny()
+			#print text.rstrip("\xff")
+			if text.find("ping") != -1:
+				bunny.sendBunny("CNC:pong\xff")
+				print "Pong sent"
 		
 	else:
 		usage()
@@ -169,10 +162,7 @@ class BunnyThread(threading.Thread):
 	def run (self):
 		# Standard calling should look like this:
 		while 1:
-			try:
-				text = self.bunny.recvBunny()
-			except libbunny.TimeoutWarning:
-				continue
+			text = self.bunny.recvBunny()
 			# if we get our own UserName do not display it,
 			# FIX THIS
 			if text.split(":")[0] == self.username:

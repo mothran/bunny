@@ -29,18 +29,6 @@ from Templates import *
 from TrafficModel import *
 from config import *
 
-class TimeoutWarning():
-	"""
-	
-	Homebrew Exception class for packet reading timeouts
-	The timeout config global varible is related to when this class is used.
-	
-	"""
-	def __init__(self, value):
-		self.value = value
-	def __str__(self):
-		return self.value
-
 class Bunny:
 	"""
 	
@@ -91,19 +79,20 @@ class Bunny:
 		Read and decode loop for bunny, raises a TimeoutWarning if it times out.
 		
 		"""
-		
-		# Standard calling should look like this:
-		#	try:
-		#		print bunny.recvBunny()
-		#	except libbunny.TimeoutWarning:
-		#		pass
+
 		
 		blockget = False
 		type = []
 		decoded = ""
 		
-		while True:								
-			encoded = self.inandout.recPacket()
+		while True:
+			try:						
+				encoded = self.inandout.recPacket_timeout()
+			except TimeoutWarning:
+				# This is some of the most anoying shit, prints every 3 seconds 
+				#if DEBUG:
+				#	print "timeout"
+				continue
 			
 			if DEBUG:
 				print "\nHit packet"
@@ -134,7 +123,6 @@ class Bunny:
 					decoded = decoded + temp
 				else:
 					if blockget == False:
-						first_time = time.time()
 						blocks, = struct.unpack("H", decoded[16:18])
 						
 						if DEBUG:
@@ -145,11 +133,6 @@ class Bunny:
 					elif decoded_len < (32*blocks + 18):
 						decoded = decoded + temp
 						decoded_len = len(decoded)
-					#print "TimeoutTime: " + str(time.time() - first_time)
-					if (time.time() - first_time) > TIMEOUT:
-						print "Timeout hit"
-						raise TimeoutWarning("The read timed out")
-						break
 					if decoded_len >= (32*blocks + 18):
 						# might be redundant
 						if DEBUG:

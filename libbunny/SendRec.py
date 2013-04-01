@@ -5,6 +5,19 @@ from pcapy import open_live
 
 from config import *
 
+class TimeoutWarning():
+	"""
+	
+	Homebrew Exception class for packet reading timeouts
+	The timeout config global varible is related to when this class is used.
+	
+	"""
+	def __init__(self, value):
+		self.value = value
+	def __str__(self):
+		return self.value
+
+
 class SendRec:
 	"""
 	
@@ -64,6 +77,20 @@ class SendRec:
 				size = int(size[0])				
 				rawPack = rawPack[size:]
 				return rawPack
+	def recPacket_timeout(self):
+		# return the raw packet if the mod/remain value is correct. 
+		start_t = time.time()
+		while(time.time() - start_t < TIMEOUT):
+			header, rawPack = self.pcapy.next()
+			size = len(rawPack)
+			if (round( size % MODULUS, 2) == REMAINDER):
+				# H = unsigned short
+				size = struct.unpack("<H", rawPack[2:4])
+				size = int(size[0])				
+				rawPack = rawPack[size:]
+				return rawPack
+		else:
+			raise TimeoutWarning("timedout")
 	
 	# these functions should be used if you dont care about being noticed
 	def sendPacketDurFix(self, data):
