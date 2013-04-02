@@ -35,7 +35,7 @@ class TrafficModel():
 		"RTS": "\xb1",
 		"CTS": "\xc1",
 		"ACK": "\xd1",
-		"ACK": "\xd4",
+		"ACK2": "\xd4",
 		"CFend": "\xe1",
 		"CFendCFack": "\xf1",
 
@@ -49,7 +49,7 @@ class TrafficModel():
 		"data-CFPollNULL": "\x62",
 		"data-CFAckPollNULL": "\x72",
 		"dataQOS": "\x82",
-		"dataQOS": "\x88",
+		"dataQOS2": "\x88",
 		"dataQOS-CFAck": "\x92",
 		"dataQOS-CFPoll": "\xa2",
 		"dataQOS-CFAckPoll": "\xb2",
@@ -218,7 +218,7 @@ class TrafficModel():
 				# replace raw data with object of template type, then append the injection length
 				entry[2] = Templates.Beacon(entry[2])
 				entry[3] = entry[2].injectable
-			if (type == "data" or type == "dataQOS"):
+			if (type == "data" or type == "dataQOS" or type == "dataQOS2"):
 				entry[2] = Templates.DataQOS(entry[2])
 				entry[3] = entry[2].injectable
 			if (type == "probeReq"):

@@ -71,7 +71,7 @@ class Bunny:
 				continue
 			packet = packet[entry[3]:]
 			self.inandout.sendPacket(outpacket)
-			time.sleep(0.1)
+			time.sleep(0.07)
 			
 	def recvBunny(self):
 		"""
@@ -92,6 +92,7 @@ class Bunny:
 				# This is some of the most anoying shit, prints every 3 seconds 
 				#if DEBUG:
 				#	print "timeout"
+				blockget = False
 				continue
 			
 			if DEBUG:
@@ -111,7 +112,7 @@ class Bunny:
 				continue
 			temp = type[2].decode(encoded)
 			if DEBUG:
-				print "In CypherText: " + binascii.hexlify(temp)
+				print "CypherText: " + binascii.hexlify(temp)
 			
 			if temp is False:
 				if DEBUG:

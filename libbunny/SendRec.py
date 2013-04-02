@@ -92,30 +92,6 @@ class SendRec:
 		else:
 			raise TimeoutWarning("timedout")
 	
-	# these functions should be used if you dont care about being noticed
-	def sendPacketDurFix(self, data):
-		data = "\x00\x00\x00\x00" + data
-		
-		# Create a packet with proper length, add radiotap header length + zeros.
-		while( round((len(data) + RADIOTAPLEN) % MODULUS, 2) != remainder):
-			data = data + os.urandom(1)
-		self.lorcon.txpacket(data)
-	def recPacketDurFix(self):
-		# return the raw packet if the mod/remain value is correct. 
-		run = True 
-		while(run):
-			header, rawPack = self.pcapy.next()
-			size = len(rawPack)
-			if (round(size % MODULUS, 2) == remainder):
-				run = False
-				# H = unsigned short
-				sizeHead = struct.unpack("<H", rawPack[2:4])
-				
-				# the + 4 is for the 4 null bytes that pad the durration field
-				sizeHead = int(sizeHead[0]) + 4
-				rawPack = rawPack[sizeHead:]
-				return rawPack
-	
 	def reloop(self):
 		"""
 		This exists only for testing purposes.
