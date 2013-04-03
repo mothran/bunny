@@ -114,7 +114,10 @@ class Templates:
 			# counter will be the size of the tag
 			# using \xdd for vendor tag.
 			#print self.vendors
-			tag = ["\xdd", 0, self.vendors[random.randrange(0, len(self.vendors))][0]]
+			if len(self.vendors) > 0:
+				tag = ["\xdd", 0, self.vendors[random.randrange(0, len(self.vendors))][0]]
+			else:
+				tag = ["\xdd", 0, ""]
 			
 			while( round((len(outpack) + tag[1] + 2 + RADIOTAPLEN) % MODULUS, 2) != REMAINDER):
 				tag[2] = tag[2] + os.urandom(1)

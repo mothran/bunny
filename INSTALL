@@ -8,6 +8,7 @@ make install
 
 Download pylorcon (not pylorcon2)
 sudo python setup.py install
+ - For this step you will need the python headers, on debian try installing 'python-dev' package
 
 repeat for:
  -pcapy
