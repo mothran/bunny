@@ -142,7 +142,7 @@ class Templates:
 				value = input[2:length+2]
 				temp_tags.append([id, length, value])
 				input = input[length + 2:]
-				
+			
 			value_chunk = temp_tags[len(temp_tags) - 2][2]
 			
 			# Fail design:
@@ -200,7 +200,8 @@ class Templates:
 			self.QOS = packet[24:26]
 			self.databody = packet[26:]
 			
-			# FIX THIS:
+			# TODO:
+			#  dynamic lengths of injectable data. randomly?
 			# Temp size is 40 bytes
 			self.injectable = 2 + 40
 			

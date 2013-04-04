@@ -82,16 +82,15 @@ class Bunny:
 
 		
 		blockget = False
-		type = []
 		decoded = ""
 		
 		while True:
+			# declare / clear the type array.
+			type = []
+			
 			try:						
 				encoded = self.inandout.recPacket_timeout()
 			except TimeoutWarning:
-				# This is some of the most anoying shit, prints every 3 seconds 
-				#if DEBUG:
-				#	print "timeout"
 				blockget = False
 				continue
 			
@@ -106,10 +105,14 @@ class Bunny:
 					if entry[3] > 0:
 						# check so that the injectable length is over 0
 						type = entry
+						break
+						
 			if len(type) < 2:
 				if DEBUG:
 					print "Packet not in templates"
 				continue
+			
+			# decode the bunny packet
 			temp = type[2].decode(encoded)
 			if DEBUG:
 				print "CypherText: " + binascii.hexlify(temp)
