@@ -136,7 +136,7 @@ class Templates:
 			
 			temp_tags = []
 			# loop through and grab the second to last vendor tag
-			while (len(input) != 0):
+			while (len(input) >= 4):
 				id = input[:1]
 				length, = struct.unpack("B", input[1:2])
 				value = input[2:length+2]

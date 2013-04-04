@@ -74,7 +74,7 @@ class SendRec:
 			if (round( size % MODULUS, 2) == REMAINDER):
 				# H = unsigned short
 				size = struct.unpack("<H", rawPack[2:4])
-				size = int(size[0])				
+				size = int(size[0])
 				rawPack = rawPack[size:]
 				return rawPack
 	def recPacket_timeout(self):
@@ -103,7 +103,7 @@ class SendRec:
 		for n in range(packNum):
 			header, rawPack = self.pcapy.next()
 			size = len(rawPack)
-			if (size % MODULUS == remainder):
+			if (size % MODULUS == REMAINDER):
 				print "pack num: %d, length is divisible by 4" % n  
 		endTime = time.time()
 		totalTime = endTime - startTime
