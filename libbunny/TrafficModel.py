@@ -131,7 +131,8 @@ class TrafficModel():
 			if ((subflags & (1 << 4)) != 0):
 				FCS = 4
 		
-		print "FCS: %s" % (FCS)
+		if DEBUG:
+			print "FCS: %s" % (FCS)
 		#  now strip the headers.
 		for packet in self.data:
 			sizeHead = struct.unpack("<H", packet[2:4])

@@ -120,7 +120,7 @@ class Templates:
 				tag = ["\xdd", 0, ""]
 			
 			#while( round((len(outpack) + tag[1] + 2 + RADIOTAPLEN) % MODULUS, 2) != REMAINDER):
-			while( round((len(outpack) + tag[1] + 2 + FCS) % MODULUS, 2) != REMAINDER):
+			while( round((len(outpack) + tag[1] + 2) % MODULUS, 2) != REMAINDER):
 				tag[2] = tag[2] + os.urandom(1)
 				tag[1] = len(tag[2])
 			
@@ -221,7 +221,7 @@ class Templates:
 			
 		def resize(self, outpack):
 			
-			while(round( (len(outpack) + FCS) % MODULUS, 2) != REMAINDER):
+			while(round( (len(outpack)) % MODULUS, 2) != REMAINDER):
 				outpack = outpack + os.urandom(1)
 			return outpack
 			
@@ -302,7 +302,7 @@ class Templates:
 			else:
 				tag = ["\xdd", 0, self.vendors[random.randrange(0, len(self.vendors))][0]]
 			
-			while( round( (len(outpack) + tag[1] + 2 + FCS) % MODULUS, 2) != REMAINDER):
+			while( round( (len(outpack) + tag[1] + 2) % MODULUS, 2) != REMAINDER):
 				tag[2] = tag[2] + os.urandom(1)
 				tag[1] = len(tag[2])
 			outpack = outpack + tag[0] + struct.pack("<B", tag[1]) + tag[2]

@@ -91,7 +91,8 @@ class SendRec:
 			if size >= 18:
 				rawPack = rawPack[size:]
 				size = len(rawPack)
-				if (round( size % MODULUS, 2) == REMAINDER):
+				# subtract the FCS to account for the radiotap header adding a CRC32
+				if (round( (size - FCS) % MODULUS, 2) == REMAINDER):
 					return rawPack
 		else:
 			raise TimeoutWarning("timedout")
