@@ -8,6 +8,8 @@ DRIVER = "rtl8187"
 MODULUS = 1.21
 REMAINDER = 0.85
 TIMEOUT = 2
-RADIOTAPLEN = 30
+
+# This will be overwritten in TrafficModel.stripRadioTap() with the length of the CHK
+FCS = 0
 
 DEBUG = 1

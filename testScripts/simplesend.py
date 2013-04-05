@@ -9,7 +9,7 @@ except pylorcon.LorconError:
 	
 lorcon.setfunctionalmode("INJECT");
 lorcon.setmode("MONITOR");
-lorcon.setchannel(11);
+lorcon.setchannel(9);
 
 packet = "A" * 1400
 for a in range(1, 200):

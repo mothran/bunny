@@ -3,6 +3,7 @@ import time, struct, operator, binascii, random
 # This is indicative of object reuse. 
 from SendRec import *
 from Templates import *
+from config import *
 
 class TrafficModel():
 	"""
@@ -108,8 +109,30 @@ class TrafficModel():
 		"""
 		Strips the RadioTap header info out of the packets are replaces the data 
 		list with the new packets.
+		
+		It also checks if this hardware has FCS (Frame Check sums's) at the end
 		"""
 		temp_data = []
+		FCS = 0
+		
+		# Check for FCS flag in the radiotap header
+		flags = self.data[0][4:8]
+		flags = struct.unpack("i", flags)[0]
+
+		#	  bval         idx 
+		if ((flags & (1 << 0)) != 0):
+			subflags = self.data[0][16:17]
+			subflags = struct.unpack("B", subflags)[0]
+		else:
+			subflags = self.data[0][8:9]
+			subflags = struct.unpack("B", subflags)[0]
+		
+		if ((flags & (1 << 1)) != 0):
+			if ((subflags & (1 << 4)) != 0):
+				FCS = 4
+		
+		print "FCS: %s" % (FCS)
+		#  now strip the headers.
 		for packet in self.data:
 			sizeHead = struct.unpack("<H", packet[2:4])
 			temp_data.append(packet[sizeHead[0]:])
