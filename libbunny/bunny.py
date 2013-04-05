@@ -92,6 +92,7 @@ class Bunny:
 				encoded = self.inandout.recPacket_timeout()
 			except TimeoutWarning:
 				blockget = False
+				decoded = ""
 				continue
 			
 			if DEBUG:

@@ -82,13 +82,17 @@ class SendRec:
 		start_t = time.time()
 		while(time.time() - start_t < TIMEOUT):
 			header, rawPack = self.pcapy.next()
-			size = len(rawPack)
-			if (round( size % MODULUS, 2) == REMAINDER):
-				# H = unsigned short
-				size = struct.unpack("<H", rawPack[2:4])
-				size = int(size[0])				
+			# H = unsigned short
+			size = struct.unpack("<H", rawPack[2:4])
+			size = int(size[0])
+			
+			# check if the radio tap header is from the interface face itself (loop backs)
+			#  that '18' might need to change with different hardware and software drivers
+			if size >= 18:
 				rawPack = rawPack[size:]
-				return rawPack
+				size = len(rawPack)
+				if (round( size % MODULUS, 2) == REMAINDER):
+					return rawPack
 		else:
 			raise TimeoutWarning("timedout")
 	
