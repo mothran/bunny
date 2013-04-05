@@ -3,7 +3,6 @@ import time, struct, operator, binascii, random
 # This is indicative of object reuse. 
 from SendRec import *
 from Templates import *
-from config import *
 
 class TrafficModel():
 	"""
@@ -72,6 +71,9 @@ class TrafficModel():
 	# [addr, freq, AP(bool)]
 	mac_addresses = []
 	
+	# FCS is the number of bytes for the Checksum if it is found in stripRadioTap()
+	FCS = 0
+	
 	def __init__(self):
 		"""
 		
@@ -113,7 +115,6 @@ class TrafficModel():
 		It also checks if this hardware has FCS (Frame Check sums's) at the end
 		"""
 		temp_data = []
-		FCS = 0
 		
 		# Check for FCS flag in the radiotap header
 		flags = self.data[0][4:8]
@@ -129,10 +130,10 @@ class TrafficModel():
 		
 		if ((flags & (1 << 1)) != 0):
 			if ((subflags & (1 << 4)) != 0):
-				FCS = 4
+				self.FCS = 4
 		
 		if DEBUG:
-			print "FCS: %s" % (FCS)
+			print "FCS: %s" % (self.FCS)
 		#  now strip the headers.
 		for packet in self.data:
 			sizeHead = struct.unpack("<H", packet[2:4])

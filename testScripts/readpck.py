@@ -20,11 +20,14 @@ while(True):
 	# get radiotap and strip
 	size = struct.unpack("<H", rawPack[2:4])
 	size = int(size[0])
-	print size
+	#print size
 	rawPack = rawPack[size:]
 	size = len(rawPack)
-	#print size
+	
+	if 130 < size < 148:
+		print size
+	
 	#print binascii.hexlify(rawPack[0:1])
-	if (round(size % 1.21, 2) == 0.85):
+	if (round((size - 4) % 1.21, 2) == 0.85):
 		print "\tgot bunny"
 	

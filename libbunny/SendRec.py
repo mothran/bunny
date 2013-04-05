@@ -77,7 +77,7 @@ class SendRec:
 				size = int(size[0])
 				rawPack = rawPack[size:]
 				return rawPack
-	def recPacket_timeout(self):
+	def recPacket_timeout(self, fcs):
 		# return the raw packet if the mod/remain value is correct. 
 		start_t = time.time()
 		while(time.time() - start_t < TIMEOUT):
@@ -92,7 +92,7 @@ class SendRec:
 				rawPack = rawPack[size:]
 				size = len(rawPack)
 				# subtract the FCS to account for the radiotap header adding a CRC32
-				if (round( (size - FCS) % MODULUS, 2) == REMAINDER):
+				if (round( (size - fcs) % MODULUS, 2) == REMAINDER):
 					return rawPack
 		else:
 			raise TimeoutWarning("timedout")

@@ -89,7 +89,7 @@ class Bunny:
 			type = []
 			
 			try:						
-				encoded = self.inandout.recPacket_timeout()
+				encoded = self.inandout.recPacket_timeout(self.model.FCS)
 			except TimeoutWarning:
 				blockget = False
 				decoded = ""
