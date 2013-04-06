@@ -9,7 +9,7 @@ MODULUS = 1.21
 REMAINDER = 0.85
 TIMEOUT = 2
 
-# This will be overwritten in TrafficModel.stripRadioTap() with the length of the CHK
-FCS = 0
+# On a raspberryPi this should be around 0.05 - 0.08
+SLEEPTIME = 0
 
 DEBUG = 1

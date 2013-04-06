@@ -60,6 +60,8 @@ class Bunny:
 			print "blocks: " + binascii.hexlify(packet[16:18])
 		
 		while ( len(packet) != 0 ):
+			#TIMING
+			#start_t = time.time()
 			entry = self.model.getEntryFrom(self.model.type_ranges)
 			try:
 				outpacket = entry[2].makePacket(packet[:entry[3]])
@@ -71,7 +73,9 @@ class Bunny:
 				continue
 			packet = packet[entry[3]:]
 			self.inandout.sendPacket(outpacket)
-			time.sleep(0.07)
+			#TIMING
+			#print "Send time: %f" % (time.time() - start_t)
+			time.sleep(SLEEPTIME)
 			
 	def recvBunny(self):
 		"""
@@ -87,9 +91,11 @@ class Bunny:
 		while True:
 			# declare / clear the type array.
 			type = []
-			
+
 			try:						
 				encoded = self.inandout.recPacket_timeout(self.model.FCS)
+				#TIMING
+				#start_t = time.time()
 			except TimeoutWarning:
 				blockget = False
 				decoded = ""
@@ -142,4 +148,8 @@ class Bunny:
 						# might be redundant
 						if DEBUG:
 							print "Ending the loop"
+						#TIMING
+						#print "recv time: %f" % (time.time() - start_t)
 						return self.cryptor.decrypt(decoded)
+				#TIMING
+				#print "recv time: %f" % (time.time() - start_t)
