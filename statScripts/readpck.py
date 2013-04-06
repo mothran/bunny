@@ -1,13 +1,18 @@
 import binascii
 import struct
 import time
+import sys
 
 from pcapy import open_live
 
-IFACE = "wlan2"
+if len(sys.argv) > 1:
+	IFACE = sys.argv[1]
+else:
+	print "USAGE: python readpck.py IFACE"
+
 MAX_LEN      = 1514		# max size of packet to capture
 PROMISCUOUS  = 1		# promiscuous mode?
-READ_TIMEOUT = 0		# in milliseconds
+READ_TIMEOUT = 1000		# in milliseconds
 MAX_PKTS     = 1		# number of packets to capture; 0 => no limit
 try:
 	pcapy = open_live(IFACE, MAX_LEN, PROMISCUOUS, READ_TIMEOUT)

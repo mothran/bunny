@@ -9,7 +9,4 @@ MODULUS = 1.21
 REMAINDER = 0.85
 TIMEOUT = 2
 
-# On a raspberryPi this should be around 0.05 - 0.08
-SLEEPTIME = 0
-
 DEBUG = 1

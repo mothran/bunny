@@ -73,10 +73,7 @@ class Bunny:
 				continue
 			packet = packet[entry[3]:]
 			self.inandout.sendPacket(outpacket)
-			#TIMING
-			#print "Send time: %f" % (time.time() - start_t)
-			time.sleep(SLEEPTIME)
-			
+
 	def recvBunny(self):
 		"""
 		
