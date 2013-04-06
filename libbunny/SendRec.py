@@ -1,4 +1,4 @@
-import struct, os, time
+import struct, os, time, pipes
 
 import pylorcon
 from pcapy import open_live
@@ -32,28 +32,24 @@ class SendRec:
 			print str(err)
 			exit()
 		
-		# check for monitor mode, if not already in monitor mode, make it.
-		if (self.lorcon.getmode() != "MONITOR"):
-			os.system("ifconfig " + IFACE + " down")
-			self.lorcon.setmode("MONITOR")
-			os.system("ifconfig " + IFACE + " up")
-			
-			#This sleep exists to wait for the changes of mode to be pushed to the interface
-			time.sleep(1)
-		
-		self.lorcon.setfunctionalmode("INJECT")
+		self.lorcon.setfunctionalmode("INJMON")
 		self.lorcon.setchannel(CHANNEL)
+		
+		# This needs an audit.
+		os.system("ifconfig " + pipes.quote(IFACE) + " up")
 		
 		# Quick definitions for pcapy
 		MAX_LEN      = 1514		# max size of packet to capture
 		PROMISCUOUS  = 1		# promiscuous mode?
 		READ_TIMEOUT = 0		# in milliseconds
 		MAX_PKTS     = 1		# number of packets to capture; 0 => no limit
+		
 		try:
 			self.pcapy = open_live(IFACE, MAX_LEN, PROMISCUOUS, READ_TIMEOUT)
-		except:
+		except pcapy.PcapError as err:
 			print "Error creating pcapy descriptor, try turning on the target interface or setting it to monitor mode"
-	
+			print str(err)
+		
 	def updateChan(self, channel):
 		"""
 		
