@@ -4,7 +4,7 @@ import pylorcon
 import time
 
 try:
-	lorcon = pylorcon.Lorcon("wlan0", "rt8187")
+	lorcon = pylorcon.Lorcon("wlan4", "ath9k_htc")
 except pylorcon.LorconError:
 	print "Please run me as root"
 	

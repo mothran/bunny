@@ -80,7 +80,7 @@ class Templates:
 			# design problem here, after attempting dynamic lengths for the injection
 			# fields I relized that for interconnectivity between clients I need to hardcode
 			# injection lengths.  So the vendor tag is 24 bytes of data:
-			self.injectable = 24 + 2 + 2
+			self.injectable = 26 + 2
 			
 		def makePacket(self, inject_data):
 			"""
@@ -89,15 +89,18 @@ class Templates:
 			inject_data must be of length Beacon.injectable
 			
 			injectable fields are:
-			sequence_number, capabilities, 2nd to last vendor tags.
+			capabilities, 2nd to last vendor tags.
+			
+			NOTE: sequence_num had to be removed due to an issue with the AR9271 firmware, see:
+				https://github.com/qca/open-ath9k-htc-firmware/issues/16
 			
 			"""
 			# timestamp needs more testing.
-			outbound = self.type + self.frame_control + self.duration + self.BSSID + self.SA + self.DA + inject_data[0:2] + self.timestamp + self.beacon_interval + inject_data[2:4]
+			outbound = self.type + self.frame_control + self.duration + self.BSSID + self.SA + self.DA + self.sequence_num + self.timestamp + self.beacon_interval + inject_data[0:2]
 			
 			for i in range(0, len(self.tags)-2):
 				outbound = outbound + self.tags[i][0] + struct.pack("<B", self.tags[i][1]) + self.tags[i][2]
-			outbound = outbound + "\xdd" + struct.pack("<B", len(inject_data[4:])) + inject_data[4:]
+			outbound = outbound + "\xdd" + struct.pack("<B", len(inject_data[2:])) + inject_data[2:]
 			#outbound += struct.pack("!i", zlib.crc32(outbound))
 			
 			outbound = self.resize(outbound)
@@ -130,8 +133,12 @@ class Templates:
 			return outpack
 		
 		def decode(self, input):
-			output = input[22:24]
-			output = output + input[34:36]
+			
+			# sequence num
+			#output = input[22:24]
+			
+			# capabilities.
+			output = input[34:36]
 			
 			input = input[36:]
 			
@@ -204,7 +211,7 @@ class Templates:
 			# TODO:
 			#  dynamic lengths of injectable data. randomly?
 			# Temp size is 40 bytes
-			self.injectable = 2 + 40
+			self.injectable = 40
 			
 		def makePacket(self, inject_data):
 			"""
@@ -212,9 +219,9 @@ class Templates:
 			Make a QOS data packet with injected data, fields are: Sequence num and databody
 			
 			"""
-			outbound = self.type + self.frame_control + self.duration+ self.BSSID + self.SA + self.DA + inject_data[0:2] + self.QOS
+			outbound = self.type + self.frame_control + self.duration+ self.BSSID + self.SA + self.DA + self.sequence_num + self.QOS
 			
-			outbound = outbound + struct.pack("B", len(inject_data[2:])) + inject_data[2:]
+			outbound = outbound + struct.pack("B", len(inject_data)) + inject_data
 			
 			outbound = self.resize(outbound)
 			return outbound
@@ -228,7 +235,7 @@ class Templates:
 		def decode(self, input):
 			# read the databody up to the size of the byte of length
 			size, = struct.unpack("B", input[26:27])
-			output = input[22:24] + input[27:size+27]
+			output = input[27:size+27]
 			return  output		
 	class ProbeRequest:
 		"""
@@ -269,11 +276,15 @@ class Templates:
 				if id == "\xdd":
 					self.vendors.append([value[:3]])
 				packet = packet[length + 2:]
-				
+			
+			# in the event there is zero vendor tags, make one up.
+			if len(self.vendors) == 0:
+				self.vendors.append([os.urandom(3)])
+			
 			# ProbeRequests get the data injected into the ssid's
 			# and are resized by a vendor tag, default SSID length is 12, again 
 			# possibly signatureable.
-			self.injectable = 12 + 2
+			self.injectable = 12
 			
 		def makePacket(self, inject_data):
 			"""
@@ -282,8 +293,8 @@ class Templates:
 			
 			"""
 			
-			outbound = self.type + self.frame_control + self.duration + self.DA + self.SA + self.BSSID + inject_data[0:2]
-			outbound = outbound + "\x00" + struct.pack("<B", len(inject_data[2:])) + inject_data[2:] 
+			outbound = self.type + self.frame_control + self.duration + self.DA + self.SA + self.BSSID + self.sequence_num
+			outbound = outbound + "\x00" + struct.pack("<B", len(inject_data)) + inject_data 
 			for i in range(1, len(self.tags)-1):
 				outbound = outbound + self.tags[i][0] + struct.pack("<B", self.tags[i][1]) + self.tags[i][2]
 
@@ -297,10 +308,7 @@ class Templates:
 			"""
 			# counter will be the size of the tag
 			# using \xdd for vendor tag.
-			if len(self.vendors) == 0:
-				tag = ["\xdd", 0, os.urandom(3)]
-			else:
-				tag = ["\xdd", 0, self.vendors[random.randrange(0, len(self.vendors))][0]]
+			tag = ["\xdd", 0, self.vendors[-1][0]]
 			
 			while( round( (len(outpack) + tag[1] + 2) % MODULUS, 2) != REMAINDER):
 				tag[2] = tag[2] + os.urandom(1)
@@ -315,7 +323,8 @@ class Templates:
 			
 			"""
 			
-			output = input[22:24]
+			# sequence_num
+			#output = input[22:24]
 			temp_tags = []
 			
 			input = input[24:]
@@ -325,8 +334,7 @@ class Templates:
 				value = input[2:length+2]
 				temp_tags.append([id, length, value])
 				input = input[length + 2:]
-			value_chunk = temp_tags[0][2]
-			return output + value_chunk
+			return temp_tags[0][2]
 			
 		def tagGrabber(self, id):
 			"""

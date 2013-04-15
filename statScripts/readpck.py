@@ -37,5 +37,6 @@ while(time.time() - start_t < 5):
 		if (round( (size - 4) % 1.21, 2) == 0.85):
 			#print "got packet"
 			cnt = cnt + 1
-	
+			#print binascii.hexlify(rawPack) + "\n"
+
 print cnt
