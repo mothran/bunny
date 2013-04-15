@@ -110,13 +110,17 @@ class Bunny:
 						# check so that the injectable length is over 0
 						type = entry
 						break
-						
+			
 			if len(type) < 2:
 				if DEBUG:
 					print "Packet type not in templates"
-				if self.model.insertNewTemplate(encoded):
+				
+				entry = self.model.insertNewTemplate(encoded)
+				if entry is not False:
 					if DEBUG:
 						print "successfuly inserted template"
+					self.model.type_ranges.append(entry)
+					type = entry
 				else:
 					if DEBUG:
 						print "Packet type not implemented"

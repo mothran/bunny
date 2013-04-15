@@ -258,6 +258,7 @@ class TrafficModel():
 		it, if an corresponding Template exists
 		
 		returns false if the packet type does not have a template
+		returns the entry in type_ranges[] if found
 		
 		TODO:
 		Currently only lets this bunny instance READ with this packet type because there is 
@@ -267,6 +268,7 @@ class TrafficModel():
 		
 		raw_type = raw_packet[:1]
 		type = self.rawToType(raw_type)
+		
 		if (type == "beacon"):
 			# replace raw data with object of template type, then append the injection length
 			entry[0] = raw_type
@@ -281,7 +283,9 @@ class TrafficModel():
 			entry[2] = Templates.ProbeRequest(raw_packet)
 			entry[3] = entry[2].injectable
 		else:
-			return False
+			entry = False
+		
+		return entry
 		
 	# debugging:
 	def printTypes(self):
