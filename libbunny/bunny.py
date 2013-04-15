@@ -113,8 +113,14 @@ class Bunny:
 						
 			if len(type) < 2:
 				if DEBUG:
-					print "Packet not in templates"
-				continue
+					print "Packet type not in templates"
+				if self.model.insertNewTemplate(encoded):
+					if DEBUG:
+						print "successfuly inserted template"
+				else:
+					if DEBUG:
+						print "Packet type not implemented"
+					continue
 			
 			# decode the bunny packet
 			temp = type[2].decode(encoded)

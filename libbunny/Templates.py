@@ -8,7 +8,6 @@ class Templates:
 	Contains templates for all packet types used by bunny.
 	
 	"""
-	
 	class Beacon:
 		"""
 		
