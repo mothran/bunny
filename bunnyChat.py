@@ -116,6 +116,8 @@ def main():
 			#bunny.model.printMacs()
 			
 	elif ping_mode_serv:
+		import struct
+		
 		bunny = libbunny.Bunny()
 		print "Model completed, ready to play pong"
 		while True:
@@ -127,14 +129,24 @@ def main():
 				print "Pong sent"
 	
 	elif ping_mode_client:
+		total = 10.0
 		bunny = libbunny.Bunny()
-		for num in range(0, 10):
+		count = 0
+		avg_time = 0
+		for num in range(0, int(total)):
 			send_time = time.time()
 			bunny.sendBunny("ping")
-			text = bunny.recvBunny()
+			text = bunny.recvBunny(True)
 			if text is not False:
+				in_time = time.time() - send_time
+				avg_time += in_time
 				print "got pong!"
-				print "Travel time: %f\n\n" % (time.time() - send_time)
+				print "Travel time: %f\n\n" % (in_time)
+				count += 1
+		print "received:       %d packets" % (count)
+		print "Percent recv'd: %02f%s" % (count * 100.0/ total, "%")
+		print "Mean time:   %f" % (avg_time / count)
+		
 				
 	else:
 		usage()
