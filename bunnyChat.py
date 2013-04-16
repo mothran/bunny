@@ -15,13 +15,14 @@ def usage():
 	print "  -r              --   Reloop shows the mod/remainder of the specified channel"
 	print "  -p              --   Ping/Pong testing, Run this on one machine and it will"
 	print "                        respond with a pong."
+	print "  -k              --   Ping server mode, will repsond to pings with pong and current time"
 
 def main():
-	listen_mode = send_mode = scan_chans_mode = chat_mode = ping_mode = reloop_mode = False
+	listen_mode = send_mode = scan_chans_mode = chat_mode = ping_mode_serv = ping_mode_client = reloop_mode = False
 	
 	# parse arguments
 	try:
-		opts, args = getopt.getopt(sys.argv[1:],"hlrmpc:s:f:")
+		opts, args = getopt.getopt(sys.argv[1:],"hlrmkpc:s:f:")
 	except getopt.GetoptError as err:
 		print str(err)
 		usage()
@@ -44,9 +45,10 @@ def main():
 		elif opt == "-c":
 			UserName = arg
 			chat_mode = True
+		elif opt == "-k":
+			ping_mode_serv = True
 		elif opt == "-p":
-			ping_mode = True
-			
+			ping_mode_client = True
 	if listen_mode:
 		print "Bunny in listen mode"
 		print "Building model: . . . "
@@ -112,16 +114,28 @@ def main():
 			bunny = libbunny.Bunny()
 			bunny.model.printTypes()
 			#bunny.model.printMacs()
-	elif ping_mode:
+			
+	elif ping_mode_serv:
 		bunny = libbunny.Bunny()
 		print "Model completed, ready to play pong"
 		while True:
 			text = bunny.recvBunny()
 			#print text.rstrip("\xff")
 			if text.find("ping") != -1:
-				bunny.sendBunny("CNC:pong\xff")
+				bunny.sendBunny(struct.pack("sfs", "pong", time.time(), "\xff"))
+				#bunny.sendBunny("CNC:pong\xff")
 				print "Pong sent"
-		
+	
+	elif ping_mode_client:
+		bunny = libbunny.Bunny()
+		for num in range(0, 10):
+			send_time = time.time()
+			bunny.sendBunny("ping")
+			text = bunny.recvBunny()
+			if text is not False:
+				print "got pong!"
+				print "Travel time: %f\n\n" % (time.time() - send_time)
+				
 	else:
 		usage()
 		sys.exit()

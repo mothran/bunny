@@ -74,10 +74,12 @@ class Bunny:
 			packet = packet[entry[3]:]
 			self.inandout.sendPacket(outpacket)
 
-	def recvBunny(self):
+	def recvBunny(self, timer=False):
 		"""
 		
-		Read and decode loop for bunny, raises a TimeoutWarning if it times out.
+		Read and decode loop for bunny.
+		
+		The 'timer' arg lets you control where or not this function will raise a timeoutWarning.
 		
 		"""
 
@@ -96,6 +98,8 @@ class Bunny:
 			except TimeoutWarning:
 				blockget = False
 				decoded = ""
+				if timer is True:
+					return False
 				continue
 			
 			if DEBUG:
