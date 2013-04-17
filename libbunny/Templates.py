@@ -327,7 +327,7 @@ class Templates:
 			temp_tags = []
 			
 			input = input[24:]
-			while (len(input) != 0):
+			while (len(input) >= 4):
 				id = input[:1]
 				length, = struct.unpack("B", input[1:2])
 				value = input[2:length+2]

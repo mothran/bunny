@@ -146,7 +146,7 @@ def main():
 		print "received:       %d packets" % (count)
 		print "Percent recv'd: %02f%s" % (count * 100.0/ total, "%")
 		print "Mean time:   %f" % (avg_time / count)
-		
+		time.sleep(0.01)
 				
 	else:
 		usage()
