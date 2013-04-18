@@ -97,7 +97,7 @@ def main():
 		workers = [StdInThread(bunny, UserName), BunnyThread(bunny, UserName)]
 		
 		for worker in workers:
-			worker.setDaemon(True)
+			worker.daemon = True
 			worker.start()
 		
 		# loop through every 3 seconds and check for dead threads
@@ -136,7 +136,7 @@ def main():
 		for num in range(0, int(total)):
 			send_time = time.time()
 			bunny.sendBunny("ping")
-			text = bunny.recvBunny(True)
+			text = bunny.recvBunny(2)
 			if text is not False:
 				in_time = time.time() - send_time
 				avg_time += in_time
@@ -187,7 +187,7 @@ class BunnyThread(threading.Thread):
 		threading.Thread.__init__(self)
 	def run (self):
 		# Standard calling should look like this:
-		while 1:
+		while True:
 			text = self.bunny.recvBunny()
 			# if we get our own UserName do not display it,
 			# FIX THIS

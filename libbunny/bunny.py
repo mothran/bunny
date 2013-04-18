@@ -22,6 +22,8 @@
 #       
 #     
 
+import threading, Queue, binascii
+
 from AEScrypt import *
 #from configure import *
 from SendRec import *
@@ -35,17 +37,27 @@ class Bunny:
 	High level send and recive for wrapping all the lower function of bunny in paranoid mode.
 	
 	"""
-		
+	
 	def __init__(self):
 		"""
 		
-		Setup and build the bunny model
+		Setup and build the bunny model and starts the read_packet_thread()
 		
 		"""
 		
 		self.inandout = SendRec()
 		self.cryptor = AEScrypt()
 		self.model = TrafficModel()
+		
+		# each item in should be an full bunny message that can be passed to the .decrypt() method
+		# TODO: put a upper bound of number of messages or a cleanup thread to clear out old messages
+		# 		if not consumed.
+		self.msg_queue = Queue.LifoQueue()
+		
+		workers = [BunnyReadThread(self.msg_queue, self.inandout, self.cryptor, self.model)]
+		for worker in workers:
+			worker.daemon = True
+			worker.start()
 		
 	def sendBunny(self, packet):
 		"""
@@ -77,20 +89,44 @@ class Bunny:
 	def recvBunny(self, timer=False):
 		"""
 		
-		Read and decode loop for bunny.
+		Grab the next bunny message in the queue and decrypt it and return the plaintext message
 		
-		The 'timer' arg lets you control where or not this function will raise a timeoutWarning.
+		Arg: timer
+			If not false, bunny will timeout in the number of seconds in timer
+		
+		Returns:
+			Decrypted bunny message or if timedout, False
 		
 		"""
+		if timer:
+			try:
+				data = self.msg_queue.get(True, timer)
+			except Queue.Empty:
+				return False
+		else:
+			data = self.msg_queue.get()
 
+		self.msg_queue.task_done()
+		return self.cryptor.decrypt(data)
 		
+	
+class BunnyReadThread(threading.Thread):
+
+	def __init__(self, queue, ioObj, cryptoObj, model):
+		self.msg_queue = queue
+		self.inandout = ioObj
+		self.cryptor = cryptoObj
+		self.model = model
+		threading.Thread.__init__(self)
+
+	def run(self):
 		blockget = False
 		decoded = ""
 		
 		while True:
 			# declare / clear the type array.
 			type = []
-
+	
 			try:						
 				encoded = self.inandout.recPacket_timeout(self.model.FCS)
 				#TIMING
@@ -98,8 +134,6 @@ class Bunny:
 			except TimeoutWarning:
 				blockget = False
 				decoded = ""
-				if timer is True:
-					return False
 				continue
 			
 			if DEBUG:
@@ -158,9 +192,13 @@ class Bunny:
 					if decoded_len >= (32*blocks + 18):
 						# might be redundant
 						if DEBUG:
-							print "Ending the loop"
+							print "Adding message to Queue"
 						#TIMING
 						#print "recv time: %f" % (time.time() - start_t)
-						return self.cryptor.decrypt(decoded)
+						self.msg_queue.put(decoded)
+						
+						# clean up for the next loop
+						blockget = False
+						decoded = ""
 				#TIMING
 				#print "recv time: %f" % (time.time() - start_t)

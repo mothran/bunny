@@ -14,6 +14,12 @@ class AEScrypt:
 	# http://www.codekoala.com/blog/2009/aes-encryption-python-using-pycrypto/
 	# http://eli.thegreenplace.net/2010/06/25/aes-encryption-of-files-in-python-with-pycrypto/
 	
+	#TODO:
+	# MAC, possibly use pyocb module to provide AES-OCB, thus getting Message auth,
+	# Needs more research though.
+	# or 
+	# CCM, less patents.
+	
 	# How the IV is transmited: 
 	# [ - - - 16B - - - -][ 2B ][ - - - - NB - - - - - -]
 	# first 16 bytes for the message is the IV. 
@@ -24,6 +30,7 @@ class AEScrypt:
 		self.blockSize = 32
 		# This padding byte needs to be changed because it could 
 		# acidentally rstrip a few bytes of the real message (if the plaintext ends in a "A")
+		# TODO: "N bytes of a value of N" padding to prevent this issue.
 		self.padding = "A"
 		self.mode = AES.MODE_CBC
 		self.aes_key = binascii.unhexlify(AESKEY)
