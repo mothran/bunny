@@ -146,7 +146,7 @@ def main():
 			bunny.sendBunny("ping")
 			text = bunny.recvBunny(2)
 			if text is not False:
-				if text.find("pong"):
+				if text.find("pong") != -1:
 					in_time = time.time() - send_time
 					avg_time += in_time
 					print "got pong!"

@@ -66,7 +66,12 @@ class Bunny:
 		# messages to between the send and recv threads. 
 		self.msg_deque = collections.deque()
 		
+		# init the threads and name them
 		self.workers = [BunnyReadThread(self.msg_queue, self.out_queue, self.inandout, self.model), BroadCaster(self.out_queue, self.msg_deque, self.inandout, self.model)]
+		self.workers[0].name = "BunnyReadThread"
+		self.workers[1].name = "BroadCasterThread"
+		
+		# spin up the threads
 		for worker in self.workers:
 			worker.daemon = True
 			worker.start()
@@ -228,6 +233,7 @@ class BroadCaster(threading.Thread):
 	
 	def run(self):
 		while self.running:
+			relay = True
 			packet = self.out_queue.get()
 			self.out_queue.task_done()
 			
@@ -237,12 +243,14 @@ class BroadCaster(threading.Thread):
 				if message[0] == packet:
 					if DEBUG:
 						print "Already seen message, not relaying"
-					continue
+					relay = False
 				# check if any of the messages in the deque need to be removed due to time
 				# 	current the time for no relay is 1 min
 				if time.time() - message[1] > 60:
 					self.msg_deque.remove(message)
-			
+		
+			if relay is False:
+				continue
 			# if we did not return then we add the current message to the deque and 
 			# start bunny-ifcation
 			self.msg_deque.append([packet, time.time()])
