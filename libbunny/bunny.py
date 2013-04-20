@@ -108,7 +108,8 @@ class Bunny:
 			
 			# check if the packet data is in the deque
 			# It does not pass it to the user if it has been already seen.
-			for message in self.msg_deque:
+			tmp_list = list(self.msg_deque)
+			for message in tmp_list:
 				if message[0] == data:
 					if DEBUG:
 						print "Already seen message, not sending to user"
@@ -228,7 +229,8 @@ class BroadCaster(threading.Thread):
 			self.out_queue.task_done()
 			
 			# check if the packet data is in the deque
-			for message in self.msg_deque:
+			tmp_list = list(self.msg_deque)
+			for message in tmp_list:
 				if message[0] == packet:
 					if DEBUG:
 						print "Already seen message, not relaying"
