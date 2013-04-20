@@ -128,6 +128,7 @@ class Bunny:
 				continue
 			else:
 				self.out_queue.put(data)
+				self.msg_deque.append([data, time.time()])
 				return self.cryptor.decrypt(data)
 				
 	def killBunny(self):
