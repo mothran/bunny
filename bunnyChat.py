@@ -135,7 +135,9 @@ def main():
 		bunny.killBunny()
 	
 	elif ping_mode_client:
-		total = 10.0
+		import struct 
+		
+		total = 100.0
 		bunny = libbunny.Bunny()
 		count = 0
 		avg_time = 0
@@ -144,11 +146,12 @@ def main():
 			bunny.sendBunny("ping")
 			text = bunny.recvBunny(2)
 			if text is not False:
-				in_time = time.time() - send_time
-				avg_time += in_time
-				print "got pong!"
-				print "Travel time: %f\n\n" % (in_time)
-				count += 1
+				if text.find("pong"):
+					in_time = time.time() - send_time
+					avg_time += in_time
+					print "got pong!"
+					print "Travel time: %f\n\n" % (in_time)
+					count += 1
 			else:
 				print "ping timeout"
 			time.sleep(0.01)

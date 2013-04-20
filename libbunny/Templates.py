@@ -65,7 +65,7 @@ class Templates:
 			
 			# this might be the place we have an error with comp to comp sending.
 			# due to the fact it tries read past the end of the.
-			while (len(packet) != 0):
+			while (len(packet) >= 4):
 				id = packet[:1]
 				length, = struct.unpack("B", packet[1:2])
 				value = packet[2:length+2]
@@ -267,7 +267,7 @@ class Templates:
 			
 			packet = packet[24:]
 			
-			while (len(packet) != 0):
+			while (len(packet) >= 4):
 				id = packet[:1]
 				length, = struct.unpack("B", packet[1:2])
 				value = packet[2:length+2]

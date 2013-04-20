@@ -67,6 +67,8 @@ class SendRec:
 		start_t = time.time()
 		while(time.time() - start_t < TIMEOUT):
 			header, rawPack = self.pcapy.next()
+			if rawPack is None:
+				continue
 			# H = unsigned short
 			size = struct.unpack("<H", rawPack[2:4])
 			size = int(size[0])
