@@ -114,13 +114,8 @@ class Bunny:
 					if DEBUG:
 						print "Already seen message, not sending to user"
 					continue
-			break	
-		#if DEBUG:
-		#	print "Queue size: " + str(self.msg_queue.qsize())
-		
-		return self.cryptor.decrypt(data)
-		
-	
+			return self.cryptor.decrypt(data)	
+
 class BunnyReadThread(threading.Thread):
 
 	def __init__(self, queue, out_queue, ioObj, model):
@@ -200,7 +195,7 @@ class BunnyReadThread(threading.Thread):
 						decoded_len = len(decoded)
 					if decoded_len >= (32*blocks + 18):
 						if DEBUG:
-							print "Adding message to Queue"
+							print "Adding message to Queues"
 						self.msg_queue.put(decoded)
 						
 						self.out_queue.put(decoded)
@@ -234,7 +229,7 @@ class BroadCaster(threading.Thread):
 				if message[0] == packet:
 					if DEBUG:
 						print "Already seen message, not relaying"
-					return
+					continue
 				# check if any of the messages in the deque need to be removed due to time
 				# 	current the time for no relay is 1 min
 				if time.time() - message[1] > 60:

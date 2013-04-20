@@ -143,6 +143,9 @@ def main():
 				print "got pong!"
 				print "Travel time: %f\n\n" % (in_time)
 				count += 1
+			else:
+				if DEBUG:
+					print "ping timeout"
 		print "received:       %d packets" % (count)
 		print "Percent recv'd: %02f%s" % (count * 100.0/ total, "%")
 		print "Mean time:   %f" % (avg_time / count)
