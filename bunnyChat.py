@@ -56,9 +56,11 @@ def main():
 		print "Bunny model built and ready to listen"
 		while True:
 			print bunny.recvBunny()
+		bunny.killBunny()
 	elif reloop_mode:
 		bunny = libbunny.Bunny()
 		bunny.inandout.reloop()
+		bunny.killBunny()
 		
 	elif send_mode:
 		if send_data is not None:
@@ -76,6 +78,7 @@ def main():
 					print "sending message: %s" % send_data
 					bunny.sendBunny(send_data)
 				elif input == "N\n" or input == "n\n":
+					bunny.killBunny()
 					sys.exit()
 		else:
 			print usage()
@@ -104,6 +107,7 @@ def main():
 		while True:
 			for worker in workers:
 				if not worker.isAlive():
+					bunny.killBunny()
 					sys.exit()
 			time.sleep(3)
 		
@@ -114,6 +118,7 @@ def main():
 			bunny = libbunny.Bunny()
 			bunny.model.printTypes()
 			#bunny.model.printMacs()
+			bunny.killBunny()
 			
 	elif ping_mode_serv:
 		import struct
@@ -144,13 +149,13 @@ def main():
 				print "Travel time: %f\n\n" % (in_time)
 				count += 1
 			else:
-				if DEBUG:
-					print "ping timeout"
+				print "ping timeout"
+			time.sleep(0.01)
 		print "received:       %d packets" % (count)
 		print "Percent recv'd: %02f%s" % (count * 100.0/ total, "%")
 		print "Mean time:   %f" % (avg_time / count)
-		time.sleep(0.01)
-				
+		bunny.killBunny()
+		
 	else:
 		usage()
 		sys.exit()

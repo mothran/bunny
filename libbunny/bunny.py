@@ -66,8 +66,8 @@ class Bunny:
 		# messages to between the send and recv threads. 
 		self.msg_deque = collections.deque()
 		
-		workers = [BunnyReadThread(self.msg_queue, self.out_queue, self.inandout, self.model), BroadCaster(self.out_queue, self.msg_deque, self.inandout, self.model)]
-		for worker in workers:
+		self.workers = [BunnyReadThread(self.msg_queue, self.out_queue, self.inandout, self.model), BroadCaster(self.out_queue, self.msg_deque, self.inandout, self.model)]
+		for worker in self.workers:
 			worker.daemon = True
 			worker.start()
 		
@@ -114,7 +114,10 @@ class Bunny:
 					if DEBUG:
 						print "Already seen message, not sending to user"
 					continue
-			return self.cryptor.decrypt(data)	
+			return self.cryptor.decrypt(data)
+	def killBunny(self):
+		for worker in self.workers:
+			worker.kill()
 
 class BunnyReadThread(threading.Thread):
 
@@ -123,13 +126,15 @@ class BunnyReadThread(threading.Thread):
 		self.out_queue = out_queue
 		self.inandout = ioObj
 		self.model = model
+		
+		self.running = True
 		threading.Thread.__init__(self)
 
 	def run(self):
 		blockget = False
 		decoded = ""
 		
-		while True:
+		while self.running:
 			# declare / clear the type array.
 			type = []
 	
@@ -205,6 +210,8 @@ class BunnyReadThread(threading.Thread):
 						# clean up for the next loop
 						blockget = False
 						decoded = ""
+	def kill(self):
+		self.running = False
 						
 class BroadCaster(threading.Thread):
 	
@@ -215,11 +222,12 @@ class BroadCaster(threading.Thread):
 		self.model = model
 		
 		self.seen_chunks = []
-		
+
+		self.running = True
 		threading.Thread.__init__(self)
 	
 	def run(self):
-		while True:
+		while self.running:
 			packet = self.out_queue.get()
 			self.out_queue.task_done()
 			
@@ -262,4 +270,5 @@ class BroadCaster(threading.Thread):
 				self.inandout.sendPacket(outpacket)
 			#TIMING
 			#print "Send time: " + str(time.time() - start_t)
-	
+	def kill(self):
+		self.running = False
