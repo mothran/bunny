@@ -132,6 +132,7 @@ def main():
 				bunny.sendBunny(struct.pack("sfs", "pong", time.time(), "\xff"))
 				#bunny.sendBunny("CNC:pong\xff")
 				print "Pong sent"
+		bunny.killBunny()
 	
 	elif ping_mode_client:
 		total = 10.0
