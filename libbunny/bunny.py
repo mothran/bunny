@@ -102,6 +102,7 @@ class Bunny:
 		"""
 		# this is looped just so if the message has been seen we can come back and keep trying.
 		while True:
+			relay = True
 			if timer:
 				try:
 					data = self.msg_queue.get(True, timer)
@@ -118,7 +119,10 @@ class Bunny:
 				if message[0] == data:
 					if DEBUG:
 						print "Already seen message, not sending to user"
-					continue
+					relay = False
+			if relay == False:
+				continue
+				
 			return self.cryptor.decrypt(data)
 	def killBunny(self):
 		for worker in self.workers:

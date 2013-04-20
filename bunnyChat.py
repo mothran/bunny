@@ -129,7 +129,7 @@ def main():
 			text = bunny.recvBunny()
 			#print text.rstrip("\xff")
 			if text.find("ping") != -1:
-				bunny.sendBunny(struct.pack("sfs", "pong", time.time(), "\xff"))
+				bunny.sendBunny(struct.pack("4sfs", "pong", time.time(), "\xff"))
 				#bunny.sendBunny("CNC:pong\xff")
 				print "Pong sent"
 		bunny.killBunny()
@@ -146,12 +146,15 @@ def main():
 			bunny.sendBunny("ping")
 			text = bunny.recvBunny(2)
 			if text is not False:
+				#print text
 				if text.find("pong") != -1:
 					in_time = time.time() - send_time
 					avg_time += in_time
 					print "got pong!"
 					print "Travel time: %f\n\n" % (in_time)
 					count += 1
+				elif text.find("ping") != -1:
+					print "got ping, wtf!"
 			else:
 				print "ping timeout"
 			time.sleep(0.01)
