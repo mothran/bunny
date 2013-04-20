@@ -22,7 +22,7 @@
 #       
 #     
 
-import threading, Queue, binascii
+import threading, Queue, collections, binascii
 
 from AEScrypt import *
 #from configure import *
@@ -30,6 +30,11 @@ from SendRec import *
 from Templates import *
 from TrafficModel import *
 from config import *
+
+
+# So this is the heart and soul of bunny and also the biggest mess in the code base.
+#  if anyone wants to look over my use of threads, queue and deques it would be lovely
+#  to get some feedback and if anyone thinks there is a way to speed this up it would help.
 
 class Bunny:
 	"""
@@ -54,10 +59,20 @@ class Bunny:
 		# 		if not consumed.
 		self.msg_queue = Queue.LifoQueue()
 		
-		workers = [BunnyReadThread(self.msg_queue, self.inandout, self.cryptor, self.model)]
+		# The out queue is a FiFo Queue because it maintaines the ording of the bunny data
+		self.out_queue = Queue.Queue()
+		
+		# The Deque is used because it is a thread safe iterable that can be filled with 'seen'
+		# messages to between the send and recv threads. 
+		self.msg_deque = collections.deque()
+		
+		workers = [BunnyReadThread(self.msg_queue, self.out_queue, self.inandout, self.model), BroadCaster(self.out_queue, self.msg_deque, self.inandout, self.model)]
 		for worker in workers:
 			worker.daemon = True
 			worker.start()
+		
+		#TODO:?
+		# can I add a 'isAlive()' checking loop here?
 		
 	def sendBunny(self, packet):
 		"""
@@ -65,27 +80,9 @@ class Bunny:
 		Send a Bunny (paranoid) packet
 		
 		"""
-		
 		packet = self.cryptor.encrypt(packet)
-		if DEBUG:
-			print "CypherText: " + binascii.hexlify(packet)
-			print "blocks: " + binascii.hexlify(packet[16:18])
+		self.out_queue.put(packet)
 		
-		while ( len(packet) != 0 ):
-			#TIMING
-			#start_t = time.time()
-			entry = self.model.getEntryFrom(self.model.type_ranges)
-			try:
-				outpacket = entry[2].makePacket(packet[:entry[3]])
-				if DEBUG:
-					print "Sending with: %s" % self.model.rawToType(entry[0])
-					print "length: " + str(len(outpacket))
-				
-			except AttributeError:
-				continue
-			packet = packet[entry[3]:]
-			self.inandout.sendPacket(outpacket)
-
 	def recvBunny(self, timer=False):
 		"""
 		
@@ -98,24 +95,37 @@ class Bunny:
 			Decrypted bunny message or if timedout, False
 		
 		"""
-		if timer:
-			try:
-				data = self.msg_queue.get(True, timer)
-			except Queue.Empty:
-				return False
-		else:
-			data = self.msg_queue.get()
-
-		self.msg_queue.task_done()
+		# this is looped just so if the message has been seen we can come back and keep trying.
+		while True:
+			if timer:
+				try:
+					data = self.msg_queue.get(True, timer)
+				except Queue.Empty:
+					return False
+			else:
+				data = self.msg_queue.get()
+			self.msg_queue.task_done()
+			
+			# check if the packet data is in the deque
+			# It does not pass it to the user if it has been already seen.
+			for message in self.msg_deque:
+				if message[0] == data:
+					if DEBUG:
+						print "Already seen message, not sending to user"
+					continue
+			break	
+		#if DEBUG:
+		#	print "Queue size: " + str(self.msg_queue.qsize())
+		
 		return self.cryptor.decrypt(data)
 		
 	
 class BunnyReadThread(threading.Thread):
 
-	def __init__(self, queue, ioObj, cryptoObj, model):
+	def __init__(self, queue, out_queue, ioObj, model):
 		self.msg_queue = queue
+		self.out_queue = out_queue
 		self.inandout = ioObj
-		self.cryptor = cryptoObj
 		self.model = model
 		threading.Thread.__init__(self)
 
@@ -138,8 +148,6 @@ class BunnyReadThread(threading.Thread):
 			
 			if DEBUG:
 				print "\nHit packet"
-			
-			if DEBUG:
 				print "Type: %s\t Raw: %s" % (binascii.hexlify(encoded[0:1]), self.model.rawToType(encoded[0:1]))
 			
 			for entry in self.model.type_ranges:
@@ -190,15 +198,71 @@ class BunnyReadThread(threading.Thread):
 						decoded = decoded + temp
 						decoded_len = len(decoded)
 					if decoded_len >= (32*blocks + 18):
-						# might be redundant
 						if DEBUG:
 							print "Adding message to Queue"
+						self.msg_queue.put(decoded)
+						
+						self.out_queue.put(decoded)
 						#TIMING
 						#print "recv time: %f" % (time.time() - start_t)
-						self.msg_queue.put(decoded)
 						
 						# clean up for the next loop
 						blockget = False
 						decoded = ""
-				#TIMING
-				#print "recv time: %f" % (time.time() - start_t)
+						
+class BroadCaster(threading.Thread):
+	
+	def __init__(self, queue, deque, ioObj, model):
+		self.out_queue = queue
+		self.msg_deque = deque
+		self.inandout = ioObj
+		self.model = model
+		
+		self.seen_chunks = []
+		
+		threading.Thread.__init__(self)
+	
+	def run(self):
+		while True:
+			packet = self.out_queue.get()
+			self.out_queue.task_done()
+			
+			# check if the packet data is in the deque
+			for message in self.msg_deque:
+				if message[0] == packet:
+					if DEBUG:
+						print "Already seen message, not relaying"
+					return
+				# check if any of the messages in the deque need to be removed due to time
+				# 	current the time for no relay is 1 min
+				if time.time() - message[1] > 60:
+					self.msg_deque.remove(message)
+			
+			# if we did not return then we add the current message to the deque and 
+			# start bunny-ifcation
+			self.msg_deque.append([packet, time.time()])
+				
+			#TIMING
+			#start_t = time.time()
+			if DEBUG:
+				print "CypherText: " + binascii.hexlify(packet)
+				print "blocks: " + binascii.hexlify(packet[16:18])
+			
+			
+			while ( len(packet) != 0 ):
+				entry = self.model.getEntryFrom(self.model.type_ranges)
+				try:
+					outpacket = entry[2].makePacket(packet[:entry[3]])
+					if DEBUG:
+						print "Sending with: %s" % self.model.rawToType(entry[0])
+						print "length: " + str(len(outpacket))
+					
+				except AttributeError:
+					#TODO:?
+					# WTF does this do?
+					continue
+				packet = packet[entry[3]:]
+				self.inandout.sendPacket(outpacket)
+			#TIMING
+			#print "Send time: " + str(time.time() - start_t)
+	

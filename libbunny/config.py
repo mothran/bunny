@@ -7,6 +7,6 @@ IFACE = "wlan4"
 DRIVER = "ath9k_htc"
 MODULUS = 1.21
 REMAINDER = 0.85
-TIMEOUT = 2
+TIMEOUT = 1
 
 DEBUG = True
