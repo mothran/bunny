@@ -22,7 +22,7 @@
 #       
 #     
 
-import threading, Queue, collections, binascii
+import threading, Queue, binascii
 
 from AEScrypt import *
 #from configure import *
@@ -64,10 +64,10 @@ class Bunny:
 		
 		# The Deque is used because it is a thread safe iterable that can be filled with 'seen'
 		# messages to between the send and recv threads. 
-		self.msg_deque = collections.deque()
+		self.msg_deque = []
 		
 		# init the threads and name them
-		self.workers = [BunnyReadThread(self.msg_queue, self.out_queue, self.inandout, self.model), BroadCaster(self.out_queue, self.msg_deque, self.inandout, self.model)]
+		self.workers = [BunnyReadThread(self.msg_queue, self.out_queue, self.inandout, self.model), BroadCaster(self.out_queue, self.inandout, self.model)]
 		self.workers[0].name = "BunnyReadThread"
 		self.workers[1].name = "BroadCasterThread"
 		
@@ -86,6 +86,7 @@ class Bunny:
 		
 		"""
 		packet = self.cryptor.encrypt(packet)
+		self.msg_deque.append([packet, time.time()])
 		self.out_queue.put(packet)
 		
 	def recvBunny(self, timer=False):
@@ -102,7 +103,7 @@ class Bunny:
 		"""
 		# this is looped just so if the message has been seen we can come back and keep trying.
 		while True:
-			relay = True
+			relay = False
 			if timer:
 				try:
 					data = self.msg_queue.get(True, timer)
@@ -112,18 +113,23 @@ class Bunny:
 				data = self.msg_queue.get()
 			self.msg_queue.task_done()
 			
-			# check if the packet data is in the deque
-			# It does not pass it to the user if it has been already seen.
-			tmp_list = list(self.msg_deque)
-			for message in tmp_list:
+			# check if the message 
+			cur_time = time.time()
+			for message in self.msg_deque:
 				if message[0] == data:
 					if DEBUG:
 						print "Already seen message, not sending to user"
-					relay = False
-			if relay == False:
+					relay = True
+				# removed old known messages
+				if cur_time - message[1] > 60:
+					self.msg_deque.remove(message)
+					
+			if relay == True:
 				continue
+			else:
+				self.out_queue.put(data)
+				return self.cryptor.decrypt(data)
 				
-			return self.cryptor.decrypt(data)
 	def killBunny(self):
 		for worker in self.workers:
 			worker.kill()
@@ -212,7 +218,6 @@ class BunnyReadThread(threading.Thread):
 							print "Adding message to Queues"
 						self.msg_queue.put(decoded)
 						
-						self.out_queue.put(decoded)
 						#TIMING
 						#print "recv time: %f" % (time.time() - start_t)
 						
@@ -224,9 +229,8 @@ class BunnyReadThread(threading.Thread):
 						
 class BroadCaster(threading.Thread):
 	
-	def __init__(self, queue, deque, ioObj, model):
+	def __init__(self, queue, ioObj, model):
 		self.out_queue = queue
-		self.msg_deque = deque
 		self.inandout = ioObj
 		self.model = model
 		
@@ -241,24 +245,6 @@ class BroadCaster(threading.Thread):
 			packet = self.out_queue.get()
 			self.out_queue.task_done()
 			
-			# check if the packet data is in the deque
-			tmp_list = list(self.msg_deque)
-			for message in tmp_list:
-				if message[0] == packet:
-					if DEBUG:
-						print "Already seen message, not relaying"
-					relay = False
-				# check if any of the messages in the deque need to be removed due to time
-				# 	current the time for no relay is 1 min
-				if time.time() - message[1] > 60:
-					self.msg_deque.remove(message)
-		
-			if relay is False:
-				continue
-			# if we did not return then we add the current message to the deque and 
-			# start bunny-ifcation
-			self.msg_deque.append([packet, time.time()])
-				
 			#TIMING
 			#start_t = time.time()
 			if DEBUG:
