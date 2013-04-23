@@ -63,7 +63,11 @@ class SendRec:
 		if data is not None:
 			self.lorcon.txpacket(data)
 	def recPacket_timeout(self, fcs):
-		# return the raw packet if the mod/remain value is correct. 
+		"""
+		return the raw packet if the mod/remain value is correct. 
+		returns False upon a timeout
+		
+		"""
 		start_t = time.time()
 		while(time.time() - start_t < TIMEOUT):
 			header, rawPack = self.pcapy.next()
@@ -82,7 +86,7 @@ class SendRec:
 				if (round( (size - fcs) % MODULUS, 2) == REMAINDER):
 					return rawPack
 		else:
-			raise TimeoutWarning("timedout")
+			return False
 	
 	def reloop(self):
 		"""

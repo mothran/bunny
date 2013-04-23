@@ -154,13 +154,13 @@ class BunnyReadThread(threading.Thread):
 			# declare / clear the type array.
 			type = []
 	
-			try:						
-				encoded = self.inandout.recPacket_timeout(self.model.FCS)
+			encoded = self.inandout.recPacket_timeout(self.model.FCS)
 				#TIMING
 				#start_t = time.time()
-			except TimeoutWarning:
+			if encoded is False:
 				blockget = False
 				decoded = ""
+				print "READ TIMEOUT"
 				continue
 			
 			if DEBUG:
