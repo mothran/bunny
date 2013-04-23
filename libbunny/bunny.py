@@ -111,9 +111,9 @@ class Bunny:
 					return False
 			else:
 				data = self.msg_queue.get()
-			self.msg_queue.task_done()
 			
-			# check if the message 
+			# check if the message has already been seen
+			#  TODO: move this whole thing to a new thread
 			cur_time = time.time()
 			for message in self.msg_deque:
 				if message[0] == data:
@@ -244,7 +244,6 @@ class BroadCaster(threading.Thread):
 		while self.running:
 			relay = True
 			packet = self.out_queue.get()
-			self.out_queue.task_done()
 			
 			#TIMING
 			#start_t = time.time()

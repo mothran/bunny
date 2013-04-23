@@ -155,9 +155,11 @@ def main():
 					count += 1
 				elif text.find("ping") != -1:
 					print "got ping, wtf!"
+				else:
+					print "bad data"
 			else:
 				print "ping timeout"
-			time.sleep(0.01)
+			#time.sleep(0.01)
 		print "received:       %d packets" % (count)
 		print "Percent recv'd: %02f%s" % (count * 100.0/ total, "%")
 		print "Mean time:   %f" % (avg_time / count)
