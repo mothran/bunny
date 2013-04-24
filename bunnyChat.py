@@ -137,7 +137,7 @@ def main():
 	elif ping_mode_client:
 		import struct 
 		
-		total = 100.0
+		total = 10000.0
 		bunny = libbunny.Bunny()
 		count = 0
 		avg_time = 0
@@ -159,6 +159,7 @@ def main():
 					print "bad data"
 			else:
 				print "ping timeout"
+				time.sleep(0.1)
 			#time.sleep(0.01)
 		print "received:       %d packets" % (count)
 		print "Percent recv'd: %02f%s" % (count * 100.0/ total, "%")

@@ -160,7 +160,6 @@ class BunnyReadThread(threading.Thread):
 			if encoded is False:
 				blockget = False
 				decoded = ""
-				print "READ TIMEOUT"
 				continue
 			
 			if DEBUG:
