@@ -1,3 +1,25 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+#    bunnyChat.py
+#
+#    Copyright 2013 W. Parker Thompson <w.parker.thompson@gmail.com>
+#		
+#    This file is part of Bunny.
+#
+#    Bunny is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Bunny is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Bunny.  If not, see <http://www.gnu.org/licenses/>.
+
 import libbunny
 import threading, getopt, sys, time
 
@@ -137,7 +159,7 @@ def main():
 	elif ping_mode_client:
 		import struct 
 		
-		total = 100.0
+		total = 10.0
 		bunny = libbunny.Bunny()
 		count = 0
 		avg_time = 0
