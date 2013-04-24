@@ -6,7 +6,18 @@ snippets of data within various fields of the 802.11 protocol, that are either p
 prone to contain data that mutates a lot.  These fields will include but are not limited to; vendor 
 data, data packets of encrypted networks, duration fields.
 
+
 For full whitepaper like decription of Bunny check proposal.txt.
+
+
+You need a monitor/injection capable wireless chipset.  Please check the aircrack website for 
+compatible cards.
+
+
+##Tested cards / chipsets:
+	rtl8187		-	Alfa AWUS036NH
+	ath9k_htc	-	TP-LINK
+	rt2800usb	-	
 
 ##Usage (bunnyChat.py example code)
 
