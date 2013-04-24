@@ -137,7 +137,7 @@ def main():
 	elif ping_mode_client:
 		import struct 
 		
-		total = 10000.0
+		total = 100.0
 		bunny = libbunny.Bunny()
 		count = 0
 		avg_time = 0

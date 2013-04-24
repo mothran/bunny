@@ -60,6 +60,7 @@ class Bunny:
 		self.msg_queue = Queue.LifoQueue()
 		
 		# The out queue is a FiFo Queue because it maintaines the ording of the bunny data
+		#  format: [data, Bool (relay or not)]
 		self.out_queue = Queue.Queue()
 		
 		# The Deque is used because it is a thread safe iterable that can be filled with 'seen'
@@ -87,7 +88,7 @@ class Bunny:
 		"""
 		packet = self.cryptor.encrypt(packet)
 		self.msg_deque.append([packet, time.time()])
-		self.out_queue.put(packet)
+		self.out_queue.put([packet, False])
 		
 	def recvBunny(self, timer=False):
 		"""
@@ -127,7 +128,7 @@ class Bunny:
 			if relay == True:
 				continue
 			else:
-				self.out_queue.put(data)
+				self.out_queue.put([data, True])
 				self.msg_deque.append([data, time.time()])
 				return self.cryptor.decrypt(data)
 				
@@ -242,8 +243,14 @@ class BroadCaster(threading.Thread):
 	def run(self):
 		while self.running:
 			relay = True
-			packet = self.out_queue.get()
+			element = self.out_queue.get()
 			
+			# sleep here if the packet is a relay packet, this prevents corruption by a 
+			#	node in between two machines that are in range.  
+			#	TODO: This value needs to be modified and played with.  
+			if element[1] is True:
+				time.sleep(0.01)
+			packet = element[0]
 			#TIMING
 			#start_t = time.time()
 			if DEBUG:

@@ -45,6 +45,7 @@ class TrafficModel():
 		"data-CFPoll": "\x22",
 		"data-CFAckPoll": "\x32",
 		"dataNULL": "\x42",
+		"dataNULLfunc": "\x48",
 		"data-CFAckNULL": "\x52",
 		"data-CFPollNULL": "\x62",
 		"data-CFAckPollNULL": "\x72",
