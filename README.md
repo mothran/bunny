@@ -1,5 +1,5 @@
 #Bunny
-Bunny is intended to act as a layer 1/2 technology for near unsignaturable wireless mesh communication.
+Bunny is intended to act as a layer 1/2 technology that attempts to hide its wireless mesh communication traffic.
 Bunny wraps all data in and out in a layer of obfoscation, it does this by passively listening to 
 the local wireless and building a model of 'average' traffic. Then using this model it hides small 
 snippets of data within various fields of the 802.11 protocol, that are either poorly defined or 
