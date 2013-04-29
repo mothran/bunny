@@ -14,10 +14,12 @@ You need a monitor/injection capable wireless chipset.  Please check the aircrac
 compatible cards.
 
 
-##Tested cards / chipsets:
+##Tested chipsets / cards:
 	rtl8187		-	Alfa AWUS036NH
-	ath9k_htc	-	TP-LINK
-	rt2800usb	-	
+					Note: These are by far the WORST chipsets on the market, the RX sensitivity makes them almost worless for any kind of application besides cracking WEP passwords.
+	ath9k_htc	-	TP-LINK tl-wn722n
+	rt2800usb	-	5370 Chipset (sold with raspberry pi's)
+					Note: Bunny works well on raspberry pi's
 
 ##Usage (bunnyChat.py example code)
 
@@ -42,6 +44,9 @@ compatible cards.
 		print bunny.recvBunny()
 
 Configuring bunny is as simple as editing the libbunny/config.py
+
+The most important item to modify is the IFACE varible, this sets which wireless interface you will use for Bunny
+
 
 ##Dependencies
 
