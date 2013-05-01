@@ -116,13 +116,24 @@ class SendRec:
 		Too ensure proper packets are read properly and at a high enough rate. 
 		"""
 		count = 0
-		packNum = 2000
+		packNum = 200
 		startTime = time.time()
 		for n in range(packNum):
 			header, rawPack = self.pcapy.next()
-			size = len(rawPack)
-			if (size % MODULUS == REMAINDER):
-				print "pack num: %d, length is divisible by 4" % n  
+			if rawPack is None:
+				continue
+			# H = unsigned short
+			size = struct.unpack("<H", rawPack[2:4])
+			size = int(size[0])
+			
+			# check if the radio tap header is from the interface face itself (loop backs)
+			#  that '18' might need to change with different hardware and software drivers
+			if size >= 18:
+				rawPack = rawPack[size:]
+				size = len(rawPack)
+				# subtract the FCS to account for the radiotap header adding a CRC32
+				if (round( (size - 4) % MODULUS, 2) == REMAINDER):
+					print "pack num: %d, " % n  
 		endTime = time.time()
 		totalTime = endTime - startTime
 		packPerSec = packNum / totalTime

@@ -80,9 +80,9 @@ def main():
 			print bunny.recvBunny()
 		bunny.killBunny()
 	elif reloop_mode:
-		bunny = libbunny.Bunny()
-		bunny.inandout.reloop()
-		bunny.killBunny()
+		#bunny = libbunny.Bunny()
+		inandout = libbunny.SendRec()
+		inandout.reloop()
 		
 	elif send_mode:
 		if send_data is not None:
