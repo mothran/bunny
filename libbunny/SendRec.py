@@ -27,18 +27,6 @@ from pcapy import open_live
 
 from config import *
 
-class TimeoutWarning():
-	"""
-	
-	Homebrew Exception class for packet reading timeouts
-	The timeout config global varible is related to when this class is used.
-	
-	"""
-	def __init__(self, value):
-		self.value = value
-	def __str__(self):
-		return self.value
-
 
 class SendRec:
 	"""
@@ -68,7 +56,7 @@ class SendRec:
 		
 		try:
 			self.pcapy = open_live(IFACE, MAX_LEN, PROMISCUOUS, READ_TIMEOUT)
-		except pcapy.PcapError as err:
+		except PcapError as err:
 			print "Error creating pcapy descriptor, try turning on the target interface or setting it to monitor mode"
 			print str(err)
 		
@@ -83,7 +71,11 @@ class SendRec:
 	# These send/rec functions should be used in hidden / paranoid mode.
 	def sendPacket(self, data):
 		if data is not None:
-			self.lorcon.txpacket(data)
+			try:
+				self.lorcon.txpacket(data)
+			except pylorcon.LorconError as err:
+				print "ERROR sending packet: "
+				print str(err)
 	def recPacket_timeout(self, fcs):
 		"""
 		return the raw packet if the mod/remain value is correct. 

@@ -149,11 +149,10 @@ def main():
 		print "Model completed, ready to play pong"
 		while True:
 			text = bunny.recvBunny()
-			#print text.rstrip("\xff")
 			if text.find("ping") != -1:
 				bunny.sendBunny(struct.pack("4sfs", "pong", time.time(), "\xff"))
-				#bunny.sendBunny("CNC:pong\xff")
 				print "Pong sent"
+				
 		bunny.killBunny()
 	
 	elif ping_mode_client:
@@ -169,16 +168,21 @@ def main():
 			text = bunny.recvBunny(2)
 			if text is not False:
 				#print text
-				if text.find("pong") != -1:
-					in_time = time.time() - send_time
-					avg_time += in_time
-					print "got pong!"
-					print "Travel time: %f\n\n" % (in_time)
-					count += 1
-				elif text.find("ping") != -1:
-					print "got ping, wtf!"
-				else:
-					print "bad data"
+				try:
+					pong, mid_time, pad = struct.unpack("4sfs", text)
+					
+					if pong == "pong":
+						in_time = time.time() - send_time
+						avg_time += in_time
+						count += 1
+						print "got pong!"
+						print "Travel time: %f\n" % (in_time)
+						
+				except struct.error as err:
+					if text.find("ping") != -1:
+						print "got ping, wtf!"
+					else:
+						print "bad data"
 			else:
 				print "ping timeout"
 				time.sleep(0.1)
