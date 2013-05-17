@@ -7,7 +7,7 @@ prone to contain data that mutates a lot.  These fields will include but are not
 data, data packets of encrypted networks, duration fields.
 
 
-For full whitepaper like decription of Bunny check proposal.txt.
+For full whitepaper like decription of Bunny, check proposal.txt.
 
 
 You need a monitor/injection capable wireless chipset.  Please check the aircrack website for 
