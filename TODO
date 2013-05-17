@@ -1,3 +1,5 @@
+- Add proper MAC (HMAC?) to the crypto
+	Keyczar?
 - Ping server mode does not close when given ctl+c
 - Add a warning to the user if when building the model, no implemented packet types are found.
 	1. Add a y/n for scanning for a longer time?
