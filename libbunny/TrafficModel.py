@@ -261,6 +261,8 @@ class TrafficModel():
 		
 		"""
 		for entry in self.type_ranges:
+			if entry[0] is None:
+				continue
 			type = self.rawToType(entry[0])
 			if (type == "beacon"):
 				# replace raw data with object of template type, then append the injection length

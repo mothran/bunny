@@ -62,10 +62,6 @@ class AEScrypt:
 		# returns a block of string of cipher text.
 		output = self.key.Encrypt(data)
 		
-		# Prepend the number of length of the packet as the first two bytes.
-		#  This allows for Bunny to know when to stop reading in packets.
-		
-		size = struct.pack("H", len(output))
 		output = size + output
 		
 		return output
@@ -74,7 +70,7 @@ class AEScrypt:
 		
 		try:
 			output = self.key.Decrypt(data)
-		except KeyczarError.nvalidSignatureError:
+		except KeyczarError.InvalidSignatureError:
 			print "ERROR: Invalid Signature, either there was a corruption or there was an attempted attack"
 			return False
 		except:

@@ -86,6 +86,11 @@ class Bunny:
 		
 		"""
 		packet = self.cryptor.encrypt(packet)
+		# Prepend the number of length of the packet as the first two bytes.
+		#  This allows for Bunny to know when to stop reading in packets.
+		size = struct.pack("H", len(packet))
+		packet = "%s%s" % (size, packet)
+		
 		self.msg_deque.append([packet, time.time()])
 		self.out_queue.put([packet, False])
 		
@@ -129,6 +134,9 @@ class Bunny:
 			else:
 				self.out_queue.put([data, True])
 				self.msg_deque.append([data, time.time()])
+				
+				# remove the size data:
+				data = data[2:]
 				return self.cryptor.decrypt(data)
 				
 	def killBunny(self):
@@ -206,14 +214,12 @@ class BunnyReadThread(threading.Thread):
 						print "size: " + str(pack_len)
 					
 					blockget = True
-					
-					# strip the length field off the first packet
-					decoded = decoded + temp[2:]
-					decoded_len = len(decoded)
-				else:
 					decoded = decoded + temp
 					decoded_len = len(decoded)
-				if decoded_len >= (pack_len):
+				elif decoded_len < pack_len:
+					decoded = decoded + temp
+					decoded_len = len(decoded)
+				if decoded_len >= pack_len:
 					if DEBUG:
 						print "Adding message to Queues"
 					self.msg_queue.put(decoded)
