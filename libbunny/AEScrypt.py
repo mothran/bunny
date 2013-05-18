@@ -69,9 +69,6 @@ class AEScrypt:
 		
 	def decrypt(self, data):
 		
-		# strip the size field off
-		data = data[2:]
-		
 		try:
 			output = self.key.Decrypt(data)
 		except InvalidSignatureError:
