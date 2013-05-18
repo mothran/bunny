@@ -216,10 +216,10 @@ class BunnyReadThread(threading.Thread):
 						print "size: " + str(pack_len)
 					
 					blockget = True
-					decoded = decoded + temp
+					decoded = "%s%s" % (decoded, temp)
 					decoded_len = len(decoded)
 				elif decoded_len < pack_len:
-					decoded = decoded + temp
+					decoded = "%s%s" % (decoded, temp)
 					decoded_len = len(decoded)
 				if decoded_len >= pack_len:
 					if DEBUG:
