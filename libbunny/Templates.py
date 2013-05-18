@@ -161,9 +161,14 @@ class Templates:
 			# capabilities.
 			output = input[34:36]
 			
-			input = input[36:]
-			
 			temp_tags = []
+			input = input[36:]
+			data_size = len(input)
+			
+			# protect from non-Bunny packets
+			if data_size < 4:
+				return False
+				
 			# loop through and grab the second to last vendor tag
 			while (len(input) >= 4):
 				id = input[:1]
@@ -349,6 +354,11 @@ class Templates:
 			temp_tags = []
 			
 			input = input[24:]
+			data_size = len(input)
+			
+			# This should protect from non-Bunny probe requests being decoded
+			if data_size < 4:
+				return False
 			while (len(input) >= 4):
 				id = input[:1]
 				length, = struct.unpack("B", input[1:2])

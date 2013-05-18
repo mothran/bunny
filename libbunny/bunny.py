@@ -189,14 +189,15 @@ class BunnyReadThread(threading.Thread):
 			
 			# decode the bunny packet
 			temp = type[2].decode(encoded)
-			if DEBUG:
-				print "CypherText: " + binascii.hexlify(temp)
-			
+
 			if temp is False:
 				if DEBUG:
 					print "decoding fail"
 				continue
 			else:
+				if DEBUG:
+					print "CypherText: " + binascii.hexlify(temp)
+					
 				decoded_len = len(decoded)
 				if decoded_len < 18:
 					decoded = decoded + temp
