@@ -51,6 +51,8 @@ The most important item to modify is the IFACE varible, this sets which wireless
 ##Dependencies
 
 	pycrypto
+	keyczar
+		pyasn1
 	lorcon
 	pylorcon
 	pcapy
@@ -66,3 +68,5 @@ Routing layers and support for projects to be built ontop of what I have done
 like cjdns and others
 
 Attempt to make a bunny tun device so testing with the batman-adv kernal module.
+
+Create a packaged version with dependencies to reduce the install time. 
