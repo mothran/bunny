@@ -22,7 +22,7 @@
 
 import os, sys, struct
 
-from keyczar.errors import KeyczarError
+from keyczar.errors import InvalidSignatureError
 from keyczar.keys import AesKey
 
 from config import *
@@ -60,17 +60,14 @@ class AEScrypt:
 	def encrypt(self, data):
 		
 		# returns a block of string of cipher text.
-		output = self.key.Encrypt(data)
-		
-		output = size + output
-		
+		output = self.key.Encrypt(data)		
 		return output
 		
 	def decrypt(self, data):
 		
 		try:
 			output = self.key.Decrypt(data)
-		except KeyczarError.InvalidSignatureError:
+		except InvalidSignatureError:
 			print "ERROR: Invalid Signature, either there was a corruption or there was an attempted attack"
 			return False
 		except:
