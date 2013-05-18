@@ -68,10 +68,12 @@ class AEScrypt:
 		try:
 			output = self.key.Decrypt(data)
 		except InvalidSignatureError:
-			print "ERROR: Invalid Signature, either there was a corruption or there was an attempted attack"
+			if DEBUG:
+				print "ERROR: Invalid Signature, either there was a corruption or there was an attempted attack"
 			return False
 		except:
-			print "ERROR: Failed to decrypt that packet"
+			# TODO: what exception is cauasing this?
+			print "ERROR: Failed to decrypt the packet"
 			if DEBUG:
 				print "Exception: \n" + sys.exc_info()[0]
 			return False

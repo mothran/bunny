@@ -137,9 +137,10 @@ class Bunny:
 				# remove the size data:
 				data = data[2:]
 				plaintext = self.cryptor.decrypt(data)
-				if plaintext is False:
+				if plaintext == False:
 					continue
-				return plaintext
+				else:
+					return plaintext
 				
 	def killBunny(self):
 		for worker in self.workers:
