@@ -6,7 +6,7 @@
 
 CAPLENGTH = 3
 
-CHANNEL = 2
+CHANNEL = 8
 IFACE = "wlan3"
 DRIVER = "ath9k_htc"
 MODULUS = 1.21

@@ -76,8 +76,7 @@ class Bunny:
 			worker.daemon = True
 			worker.start()
 		
-		#TODO:?
-		# can I add a 'isAlive()' checking loop here?
+		#TODO: can I add a 'isAlive()' checking loop here?
 		
 	def sendBunny(self, packet):
 		"""
@@ -137,7 +136,10 @@ class Bunny:
 				
 				# remove the size data:
 				data = data[2:]
-				return self.cryptor.decrypt(data)
+				plaintext = self.cryptor.decrypt(data)
+				if plaintext is False:
+					continue
+				return plaintext
 				
 	def killBunny(self):
 		for worker in self.workers:
@@ -275,8 +277,7 @@ class BroadCaster(threading.Thread):
 						print "length: " + str(len(outpacket))
 					
 				except AttributeError:
-					#TODO:?
-					# WTF does this do?
+					#TODO: WTF does this do?
 					continue
 				packet = packet[entry[3]:]
 				self.inandout.sendPacket(outpacket)

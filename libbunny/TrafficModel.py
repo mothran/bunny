@@ -285,9 +285,8 @@ class TrafficModel():
 		returns false if the packet type does not have a template
 		returns the entry in type_ranges[] if found
 		
-		TODO:
-		Currently only lets this bunny instance READ with this packet type because there is 
-		zero frequency.
+		TODO: Currently only lets this bunny instance READ 
+		with this packet type because there is zero frequency.
 		"""
 		entry = [0, 0, 0, 0]
 		

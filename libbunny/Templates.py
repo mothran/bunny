@@ -234,8 +234,7 @@ class Templates:
 			self.QOS = packet[24:26]
 			self.databody = packet[26:]
 			
-			# TODO:
-			#  dynamic lengths of injectable data. randomly?
+			# TODO: dynamic lengths of injectable data. randomly?
 			# Temp size is 40 bytes
 			self.injectable = 40
 			
@@ -365,7 +364,6 @@ class Templates:
 				value = input[2:length+2]
 				temp_tags.append([id, length, value])
 				input = input[length + 2:]
-			# TODO: error here, index out of range.
 			return temp_tags[0][2]
 			
 		def tagGrabber(self, id):
