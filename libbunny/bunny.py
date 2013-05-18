@@ -201,19 +201,19 @@ class BunnyReadThread(threading.Thread):
 					print "CypherText: " + binascii.hexlify(temp)
 				
 				if blockget == False:
-					blocks, = struct.unpack("H", temp[0:2])
+					pack_len, = struct.unpack("H", temp[0:2])
 					if DEBUG:
-						print "size: " + str(blocks)
+						print "size: " + str(pack_len)
 					
 					blockget = True
 					
 					# strip the length field off the first packet
 					decoded = decoded + temp[2:]
 					decoded_len = len(decoded)
-				elif decoded_len < (self.cryptor.block_len*blocks + self.cryptor.overhead):
+				else:
 					decoded = decoded + temp
 					decoded_len = len(decoded)
-				if decoded_len >= (self.cryptor.block_len*blocks + self.cryptor.overhead):
+				if decoded_len >= (pack_len):
 					if DEBUG:
 						print "Adding message to Queues"
 					self.msg_queue.put(decoded)
