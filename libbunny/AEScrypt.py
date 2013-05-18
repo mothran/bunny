@@ -22,7 +22,7 @@
 
 import os, sys, struct
 
-import KeyczarError
+from keyczar.errors import KeyczarError
 from keyczar.keys import AesKey
 
 from config import *
