@@ -20,9 +20,9 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Bunny.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, binascii, struct
+import os, sys, struct
 
-from Crypto.Cipher import AES	#pycrypto
+from keyczar.keys import AesKey
 from config import *
 
 class AEScrypt:
@@ -32,56 +32,56 @@ class AEScrypt:
 	
 	"""
 	
-	# much of this is taken from this how-to: 
-	# http://www.codekoala.com/blog/2009/aes-encryption-python-using-pycrypto/
-	# http://eli.thegreenplace.net/2010/06/25/aes-encryption-of-files-in-python-with-pycrypto/
-	
-	#TODO:
-	# MAC, possibly use pyocb module to provide AES-OCB, thus getting Message auth,
-	# Needs more research though.
-	# or 
-	# CCM, less patents.
-	
-	# How the IV is transmited: 
-	# [ - - - 16B - - - -][ 2B ][ - - - - NB - - - - - -]
-	# first 16 bytes for the message is the IV. 
-	# bytes 17 and 18 are the number of blocks to read. (int short)
-
 	def __init__(self):
+		# check if the key.kz file exists
+		try:
+			with open("keys.kz", "r") as fd:
+				data = fd.read()
+		except IOError:
+			print "ERROR: no key file found, generating the file"
+			self.key = AesKey.Generate()
+			with open("keys.kz", "w+") as fd:
+				fd.write(str(self.key))
+		else:
+			self.key = AesKey.Read(data)
+			if DEBUG:
+				print self.key.key_string
+				print self.key.hmac_key
 		
-		self.blockSize = 32
-		# This padding byte needs to be changed because it could 
-		# acidentally rstrip a few bytes of the real message (if the plaintext ends in a "A")
-		# TODO: "N bytes of a value of N" padding to prevent this issue.
-		self.padding = "A"
-		self.mode = AES.MODE_CBC
-		self.aes_key = binascii.unhexlify(AESKEY)
+		# If keyczar changes their header format this would need to change:
+		#  5 bytes for the header and 16 for the IV
+		self.header_len = 5 + 16
+		self.block_len = self.key.block_size
+		self.hmac_len = self.key.hmac_key.size/8
+		self.overhead = self.header_len + self.hmac_len
 		
 	def encrypt(self, data):
 		
-		# returns a block of string of cipher text
-		iv = os.urandom(16)
-		encryptor = AES.new(self.aes_key, self.mode, iv)
-		encoded = "%s" % (data + (self.blockSize - len(data) % self.blockSize) * self.padding)
-		encoded = encryptor.encrypt(encoded)
-		block_count = len(encoded) / 32
-		block_count = struct.pack("H", block_count)
-		output = iv + block_count + encoded
+		# returns a block of string of cipher text.
+		output = self.key.Encrypt(data)
+		
+		# Prepend the number of length of the packet as the first two bytes.
+		#  This allows for Bunny to know when to stop reading in packets.
+		size = struct.pack("H", len(data))
+		output = size + data
+		
 		return output
 		
 	def decrypt(self, data):
 		
-		# return a block of plaintext
-		iv = data[:16]
-		block_count = struct.unpack("H", data[16:18])
-		block_count = block_count[0] * 32 + 18
-		raw = data[18:block_count]
-		encryptor = AES.new(self.aes_key, self.mode, iv)
+		# strip the size field off
+		data = data[2:]
+		
 		try:
-			Eoutput = encryptor.decrypt(raw).rstrip(self.padding)
-		except:
-			print "Bad Packet legnth, consider resending"
+			output = self.key.Decrypt(data)
+		except InvalidSignatureError:
+			print "ERROR: Invalid Signature, either there was a corruption or there was an attempted attack"
 			return False
-			
-		return Eoutput
+		except:
+			print "ERROR: Failed to decrypt that packet"
+			if DEBUG:
+				print "Exception: \n" + sys.exc_info()[0]
+			return False
+		
+		return output
 		

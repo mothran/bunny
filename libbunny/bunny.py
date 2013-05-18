@@ -66,7 +66,8 @@ class Bunny:
 		self.msg_deque = []
 		
 		# init the threads and name them
-		self.workers = [BunnyReadThread(self.msg_queue, self.out_queue, self.inandout, self.model), BroadCaster(self.out_queue, self.inandout, self.model)]
+		self.workers = [BunnyReadThread(self.msg_queue, self.out_queue, self.inandout, self.model, self.cryptor), \
+			BroadCaster(self.out_queue, self.inandout, self.model)]
 		self.workers[0].name = "BunnyReadThread"
 		self.workers[1].name = "BroadCasterThread"
 		
@@ -136,11 +137,12 @@ class Bunny:
 
 class BunnyReadThread(threading.Thread):
 
-	def __init__(self, queue, out_queue, ioObj, model):
+	def __init__(self, queue, out_queue, ioObj, model, cryptor):
 		self.msg_queue = queue
 		self.out_queue = out_queue
 		self.inandout = ioObj
 		self.model = model
+		self.cryptor = cryptor
 		
 		self.running = True
 		threading.Thread.__init__(self)
@@ -197,33 +199,29 @@ class BunnyReadThread(threading.Thread):
 			else:
 				if DEBUG:
 					print "CypherText: " + binascii.hexlify(temp)
+				
+				if blockget == False:
+					blocks, = struct.unpack("H", decoded[0:2])
 					
-				decoded_len = len(decoded)
-				if decoded_len < 18:
+					if DEBUG:
+						print "blocks: " + str(blocks)
+					blockget = True
 					decoded = decoded + temp
-				else:
-					if blockget == False:
-						blocks, = struct.unpack("H", decoded[16:18])
-						
-						if DEBUG:
-							print "blocks: " + str(blocks)
-						blockget = True
-						decoded = decoded + temp
-						decoded_len = len(decoded)
-					elif decoded_len < (32*blocks + 18):
-						decoded = decoded + temp
-						decoded_len = len(decoded)
-					if decoded_len >= (32*blocks + 18):
-						if DEBUG:
-							print "Adding message to Queues"
-						self.msg_queue.put(decoded)
-						
-						#TIMING
-						#print "recv time: %f" % (time.time() - start_t)
-						
-						# clean up for the next loop
-						blockget = False
-						decoded = ""
+					decoded_len = len(decoded)
+				elif decoded_len < (self.cryptor.block_len*blocks + self.cryptor.overhead):
+					decoded = decoded + temp
+					decoded_len = len(decoded)
+				if decoded_len >= (self.cryptor.block_len*blocks + self.cryptor.overhead):
+					if DEBUG:
+						print "Adding message to Queues"
+					self.msg_queue.put(decoded)
+					
+					#TIMING
+					#print "recv time: %f" % (time.time() - start_t)
+					
+					# clean up for the next loop
+					blockget = False
+					decoded = ""
 	def kill(self):
 		self.running = False
 						
@@ -256,7 +254,7 @@ class BroadCaster(threading.Thread):
 			
 			if DEBUG:
 				print "CypherText: " + binascii.hexlify(packet)
-				print "blocks: " + binascii.hexlify(packet[16:18])
+				print "blocks: " + binascii.hexlify(packet[0:2])
 			
 			
 			while ( len(packet) != 0 ):
