@@ -188,8 +188,11 @@ def main():
 				time.sleep(0.1)
 			#time.sleep(0.01)
 		print "received:       %d packets" % (count)
-		print "Percent recv'd: %02f%s" % (count * 100.0/ total, "%")
-		print "Mean time:   %f" % (avg_time / count)
+		try:
+			print "Percent recv'd: %02f%s" % (count * 100.0/ total, "%")
+			print "Mean time:   %f" % (avg_time / count)
+		except ZeroDivisionError:
+			pass
 		bunny.killBunny()
 		
 	else:
