@@ -45,8 +45,12 @@ compatible cards.
 
 Configuring bunny is as simple as editing the libbunny/config.py
 
-The most important item to modify is the IFACE varible, this sets which wireless interface you will use for Bunny
+The most important item to modify is the IFACE varible, this sets which wireless interface you will use for Bunny.  
+Also if you wish to run a non-testing network, delect the 'keys.kz' file and bunny will make a new one with random values.  
+Distribute this file to the peers on your network.
 
+The modules aspect of Bunny is under-developed currently, the key file needs to be more controlable through the API 
+and BunnyExceptions need to be built out and used
 
 ##Dependencies
 
