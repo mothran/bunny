@@ -62,8 +62,9 @@ class AEScrypt:
 		
 		# Prepend the number of length of the packet as the first two bytes.
 		#  This allows for Bunny to know when to stop reading in packets.
-		size = struct.pack("H", len(data))
-		output = size + data
+		
+		size = struct.pack("H", len(output))
+		output = size + output
 		
 		return output
 		

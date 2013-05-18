@@ -203,7 +203,7 @@ class BunnyReadThread(threading.Thread):
 				if blockget == False:
 					blocks, = struct.unpack("H", temp[0:2])
 					if DEBUG:
-						print "blocks: " + str(blocks)
+						print "size: " + str(blocks)
 					
 					blockget = True
 					
@@ -256,7 +256,8 @@ class BroadCaster(threading.Thread):
 			
 			if DEBUG:
 				print "CypherText: " + binascii.hexlify(packet)
-				print "blocks: " + binascii.hexlify(packet[0:2])
+				blocks, = struct.unpack("H", packet[0:2])
+				print "size: " + str(blocks)
 			
 			
 			while ( len(packet) != 0 ):
