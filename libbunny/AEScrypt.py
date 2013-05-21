@@ -75,7 +75,7 @@ class AEScrypt:
 			# TODO: what exception is cauasing this?
 			print "ERROR: Failed to decrypt the packet"
 			if DEBUG:
-				print "Exception: \n" + sys.exc_info()[0]
+				print "Exception: \n" + str(sys.exc_info()[0])
 			return False
 		
 		return output
