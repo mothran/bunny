@@ -258,6 +258,11 @@ class Templates:
 			return outpack
 			
 		def decode(self, input):
+			
+			# If the packet is not 27 bytes long it does not have any data in it. return false
+			if len(input) < 27:
+				return False
+			
 			# read the databody up to the size of the byte of length
 			size, = struct.unpack("B", input[26:27])
 			output = input[27:size+27]
