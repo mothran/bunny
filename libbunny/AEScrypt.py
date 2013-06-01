@@ -72,7 +72,7 @@ class AEScrypt:
 				print "ERROR: Invalid Signature, either there was a corruption or there was an attempted attack"
 			return False
 		except:
-			# TODO: what exception is cauasing this?
+			# TODO: what exception is causing this?
 			print "ERROR: Failed to decrypt the packet"
 			if DEBUG:
 				print "Exception: \n" + str(sys.exc_info()[0])
