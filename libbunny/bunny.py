@@ -37,7 +37,7 @@ from config import *
 class Bunny:
 	"""
 	
-	High level send and recive for wrapping all the lower function of bunny in paranoid mode.
+	High level send and receive for wrapping all the lower-level functions of bunny in paranoid mode.
 	
 	"""
 	
@@ -52,17 +52,17 @@ class Bunny:
 		self.cryptor = AEScrypt()
 		self.model = TrafficModel()
 		
-		# each item in should be an full bunny message that can be passed to the .decrypt() method
+		# each item should be an full bunny message that can be passed to the .decrypt() method
 		# TODO: put a upper bound of number of messages or a cleanup thread to clear out old messages
 		# 		if not consumed.
 		self.msg_queue = Queue.LifoQueue()
 		
-		# The out queue is a FiFo Queue because it maintaines the ording of the bunny data
+		# The out queue is a FiFo Queue because it maintaines the ordering of the bunny data
 		#  format: [data, Bool (relay or not)]
 		self.out_queue = Queue.Queue()
 		
 		# The Deque is used because it is a thread safe iterable that can be filled with 'seen'
-		# messages to between the send and recv threads. 
+		# messages between the send and recv threads. 
 		self.msg_deque = []
 		
 		# init the threads and name them
@@ -85,7 +85,7 @@ class Bunny:
 		
 		"""
 		packet = self.cryptor.encrypt(packet)
-		# Prepend the number of length of the packet as the first two bytes.
+		# Prepend the length of the packet as the first two bytes.
 		#  This allows for Bunny to know when to stop reading in packets.
 		size = struct.pack("H", len(packet))
 		packet = "%s%s" % (size, packet)
@@ -124,7 +124,7 @@ class Bunny:
 					if DEBUG:
 						print "Already seen message, not sending to user"
 					relay = True
-				# removed old known messages
+				# remove old known messages
 				if cur_time - message[1] > 60:
 					self.msg_deque.remove(message)
 					

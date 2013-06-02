@@ -105,7 +105,7 @@ class SendRec:
 	def reloop(self):
 		"""
 		This exists only for testing purposes.
-		Too ensure proper packets are read properly and at a high enough rate. 
+		To ensure proper packets are read properly and at a high enough rate. 
 		"""
 		count = 0
 		packNum = 200
