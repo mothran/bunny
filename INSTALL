@@ -13,6 +13,6 @@ sudo python setup.py install
 
 repeat for:
  -pcapy
- -pcrypto
+ -pycrypto
  -keyczar
  -pyasn1	(If you have 'python-setuptools' installed just run: 'easy_install pyasn1')
