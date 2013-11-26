@@ -51,6 +51,7 @@ for help generating mod/remain vaules check testScripts/mod.py
 
 	while True:
 		print bunny.recvBunny()
+	bu
 
 The modules aspect of Bunny is under-developed currently, the key file needs to be more controlable through the API 
 and BunnyExceptions need to be built out and used
@@ -60,16 +61,14 @@ and BunnyExceptions need to be built out and used
 	pycrypto
 	keyczar
 		pyasn1
-	lorcon
-	pylorcon
+	lorcon2 (current)
+	pylorcon2 (https://code.google.com/p/pylorcon2/)
 	pcapy
 
 ##Installation
 Check INSTALL file
 
 ##TODO
-
-Implement pylorcon2 and lorcon2 once more drivers are added in lorcon2
 
 Routing layers and support for projects to be built ontop of what I have done
 like cjdns and others

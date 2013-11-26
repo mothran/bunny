@@ -22,7 +22,7 @@
 
 import struct, os, time, pipes
 
-import pylorcon
+import PyLorcon2
 from pcapy import open_live
 
 from config import *
@@ -36,14 +36,20 @@ class SendRec:
 	"""
 	def __init__(self):		
 		try:
-			self.lorcon = pylorcon.Lorcon(IFACE, DRIVER)
-		except pylorcon.LorconError as err:
+			self.lorcon = PyLorcon2.Context(IFACE)
+		except PyLorcon2.Lorcon2Exception as err:
 			print "Error creating lorcon object: "
 			print str(err)
 			exit()
 		
-		self.lorcon.setfunctionalmode("INJMON")
-		self.lorcon.setchannel(CHANNEL)
+		try:
+			self.lorcon.open_injmon()
+		except PyLorcon2.Lorcon2Exception as err:
+			print "Error while setting injection mode, are you root?"
+			print str(err)
+			exit()
+
+		self.lorcon.set_channel(CHANNEL)
 		
 		# This needs an audit.
 		os.system("ifconfig " + pipes.quote(IFACE) + " up")
@@ -66,14 +72,14 @@ class SendRec:
 		Updates the current channel
 		
 		"""
-		self.lorcon.setchannel(channel)
+		self.lorcon.set_channel(channel)
 	
 	# These send/rec functions should be used in hidden / paranoid mode.
 	def sendPacket(self, data):
 		if data is not None:
 			try:
-				self.lorcon.txpacket(data)
-			except pylorcon.LorconError as err:
+				self.lorcon.send_bytes(data)
+			except PyLorcon2.Lorcon2Exception as err:
 				print "ERROR sending packet: "
 				print str(err)
 	def recPacket_timeout(self, fcs):
@@ -139,3 +145,7 @@ class SendRec:
 		"""
 		header, rawPack = self.pcapy.next()
 		return rawPack
+
+	def close(self):
+		self.lorcon.close()
+		

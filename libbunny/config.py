@@ -1,8 +1,7 @@
 CAPLENGTH = 3
 
 CHANNEL = 8
-IFACE = "wlan3"
-DRIVER = "ath9k_htc"
+IFACE = "wlan1"
 MODULUS = 1.21
 REMAINDER = 0.85
 TIMEOUT = 1

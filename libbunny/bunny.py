@@ -235,6 +235,7 @@ class BunnyReadThread(threading.Thread):
 					decoded = ""
 	def kill(self):
 		self.running = False
+		self.inandout.close()
 						
 class BroadCaster(threading.Thread):
 	
@@ -286,3 +287,4 @@ class BroadCaster(threading.Thread):
 			#print "Send time: " + str(time.time() - start_t)
 	def kill(self):
 		self.running = False
+		self.inandout.close()
