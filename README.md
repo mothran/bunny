@@ -51,7 +51,7 @@ for help generating mod/remain vaules check testScripts/mod.py
 
 	while True:
 		print bunny.recvBunny()
-	bu
+	bunny.killBunny()
 
 The modules aspect of Bunny is under-developed currently, the key file needs to be more controlable through the API 
 and BunnyExceptions need to be built out and used
