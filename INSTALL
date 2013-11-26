@@ -1,15 +1,15 @@
-download lorcon-old:
-svn co http://802.11ninja.net/svn/lorcon/branch/lorcon-old lorcon
+download lorcon:
+git clone https://code.google.com/p/lorcon/
 
 cd lorcon
 ./configure --prefix=/usr
+	- You will also need 'libpcap-dev' package
 make
 make install
 
-Download pylorcon (not pylorcon2)
+Download pylorcon2 (the one on google code)
 sudo python setup.py install
  - For this step you will need the python headers, on debian try installing 'python-dev' package
- - You will also need 'libpcap-dev' package
 
 repeat for:
  -pcapy
