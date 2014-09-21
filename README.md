@@ -76,3 +76,6 @@ like cjdns and others
 Attempt to make a bunny tun device so testing with the batman-adv kernal module.
 
 Create a packaged version with dependencies to reduce the install time. 
+
+##Bugs
+Due to this (https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=500041) bug in pcapy, at least on Arch linux I had to NOT use the offical upstream but the packaged AUR here: https://aur.archlinux.org/packages/python2-pcapy/

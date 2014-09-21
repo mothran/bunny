@@ -260,6 +260,7 @@ class TrafficModel():
 		[type, freq, templateObject, injectLen]
 		
 		"""
+		tmp_list = []
 		for entry in self.type_ranges:
 			if entry[0] is None:
 				continue
@@ -274,7 +275,11 @@ class TrafficModel():
 			elif (type == "probeReq"):
 				entry[2] = Templates.ProbeRequest(entry[2])
 				entry[3] = entry[2].injectable
-			# add more
+			else:
+				continue
+			tmp_list.append(entry)
+		self.type_ranges = tmp_list
+
 	def insertNewTemplate(self, raw_packet):
 		"""
 		
@@ -345,16 +350,16 @@ class TrafficModel():
 		for entry in self.mac_addresses:
 			print "%-15s%-10f%s" % (binascii.hexlify(entry[0]), entry[1], entry[2])
 
-	def getEntryFrom(self, array):
+	def getEntry(self):
 		"""
 		
-		Returns a frequency adjusted random entry from an array such as type_ranges
+		Returns a frequency adjusted random entry from the array type_ranges
 		Follows the [name, freq, ...] structure.
 		
 		"""
 		num = random.random()
 		count = 0.0
-		for entry in array:
+		for entry in self.type_ranges:
 			count += entry[1] 
 			if count > num:
 				break
