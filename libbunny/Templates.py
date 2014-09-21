@@ -247,6 +247,8 @@ class Templates:
 			Make a QOS data packet with injected data, fields are: Sequence num and databody
 			
 			"""
+			self.sequence_num = struct.pack("<H", random.randrange(0,65536) & 0xF000)
+
 			outbound = self.type + self.frame_control + self.duration+ self.BSSID + self.SA + self.DA + self.sequence_num + self.QOS
 			
 			outbound = outbound + struct.pack("B", len(inject_data)) + inject_data
@@ -325,6 +327,8 @@ class Templates:
 			Creates a packet with injected encrypted data.
 			
 			"""
+
+			self.sequence_num = struct.pack("<H", random.randrange(0,65536) & 0xF000)
 			
 			outbound = self.type + self.frame_control + self.duration + self.DA + self.SA + self.BSSID + self.sequence_num
 			outbound = outbound + "\x00" + struct.pack("<B", len(inject_data)) + inject_data 
