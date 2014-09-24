@@ -54,7 +54,7 @@ class Bunny:
 		
 		# each item should be an full bunny message that can be passed to the .decrypt() method
 		# TODO: put a upper bound of number of messages or a cleanup thread to clear out old messages
-		# 		if not consumed.
+		#  if not consumed.
 		self.msg_queue = Queue.LifoQueue()
 		
 		# The out queue is a FiFo Queue because it maintaines the ordering of the bunny data
