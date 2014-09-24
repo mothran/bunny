@@ -24,15 +24,15 @@ import struct, random, os
 
 from config import *
 
+def generate_seqnumb():
+	return struct.pack("<H", random.randrange(0,65536) & 0xF000)
+
 class Templates:
 	"""
 	
 	Contains templates for all packet types used by bunny.
 	
 	"""
-	def generate_seqnumb(self):
-		return struct.pack("<H", random.randrange(0,65536) & 0xF000)
-
 	class Beacon:
 		"""
 		

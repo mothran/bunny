@@ -268,13 +268,10 @@ class TrafficModel():
 			if (type == "beacon"):
 				# replace raw data with object of template type, then append the injection length
 				entry[2] = Templates.Beacon(entry[2])
-				entry[3] = entry[2].injectable
 			elif (type == "data" or type == "dataQOS" or type == "dataQOS2"):
 				entry[2] = Templates.DataQOS(entry[2])
-				entry[3] = entry[2].injectable
 			elif (type == "probeReq"):
 				entry[2] = Templates.ProbeRequest(entry[2])
-				entry[3] = entry[2].injectable
 			else:
 				continue
 			tmp_list.append(entry)
@@ -293,7 +290,7 @@ class TrafficModel():
 		TODO: Currently only lets this bunny instance READ 
 		with this packet type because there is zero frequency.
 		"""
-		entry = [0, 0, 0, 0]
+		entry = [0, 0, 0]
 		
 		raw_type = raw_packet[:1]
 		type = self.rawToType(raw_type)
@@ -302,15 +299,12 @@ class TrafficModel():
 			# replace raw data with object of template type, then append the injection length
 			entry[0] = raw_type
 			entry[2] = Templates.Beacon(raw_packet)
-			entry[3] = entry[2].injectable
 		elif (type == "data" or type == "dataQOS" or type == "dataQOS2"):
 			entry[0] = raw_type
 			entry[2] = Templates.DataQOS(raw_packet)
-			entry[3] = entry[2].injectable
 		elif (type == "probeReq"):
 			entry[0] = raw_type
 			entry[2] = Templates.ProbeRequest(raw_packet)
-			entry[3] = entry[2].injectable
 		else:
 			entry = False
 		

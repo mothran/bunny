@@ -180,7 +180,7 @@ class BunnyReadThread(threading.Thread):
 			
 			for entry in self.model.type_ranges:
 				if entry[0] == encoded[0:1]:
-					if entry[3] > 0:
+					if entry[2].injectable > 0:
 						# check so that the injectable length is over 0
 						type = entry
 						break
@@ -273,12 +273,12 @@ class BroadCaster(threading.Thread):
 			
 			while ( len(packet) != 0 ):
 				entry = self.model.getEntry()
-				outpacket = entry[2].makePacket(packet[:entry[3]])
+				outpacket = entry[2].makePacket(packet[:entry[2].injectable])
 				if DEBUG:
 					print "Sending with: %s" % self.model.rawToType(entry[0])
 					print "length: " + str(len(outpacket))
 
-				packet = packet[entry[3]:]
+				packet = packet[entry[2].injectable:]
 				self.inandout.sendPacket(outpacket)
 			#TIMING
 			#print "Send time: " + str(time.time() - start_t)
