@@ -23,7 +23,7 @@
 import struct, time, pipes, subprocess
 
 import PyLorcon2
-from pcapy import open_live
+from pcapy import open_live, PcapError
 
 from config import *
 
@@ -68,7 +68,9 @@ class SendRec:
 		# Quick definitions for pcapy
 		MAX_LEN      = 1514		# max size of packet to capture
 		PROMISCUOUS  = 1		# promiscuous mode?
-		READ_TIMEOUT = 0		# in milliseconds
+		READ_TIMEOUT = 0		# in milliseconds, I found that 0 does not tend to block
+								#  in the way I had assumed and you get a NULL pcap error from:
+								#  https://github.com/CoreSecurity/pcapy/blob/master/pcapobj.cc#L215
 		MAX_PKTS     = 1		# number of packets to capture; 0 => no limit
 		
 		try:
@@ -101,7 +103,13 @@ class SendRec:
 		"""
 		start_t = time.time()
 		while(time.time() - start_t < TIMEOUT):
-			header, rawPack = self.pcapy.next()
+			try:
+				header, rawPack = self.pcapy.next()
+			except PcapError:
+				# This exists because on some hardware, instead of blocking for a packet
+				#  the pcap layer will return a null packet buffer and no error message.
+				continue
+				
 			if rawPack is None:
 				continue
 			# H = unsigned short
@@ -154,13 +162,19 @@ class SendRec:
 		RadioTap headers included
 		
 		"""
+		while True:
+			try:
+				header, rawPack = self.pcapy.next()
+			except PcapError:
+				# This exists because on some hardware, instead of blocking for a packet
+				#  the pcap layer will return a null packet buffer and no error message.
+				continue
 
-		header, rawPack = self.pcapy.next()
-		if rawPack is None:
-			if DEBUG:
-				print 'got a nothing packet, possible issue with pcapy that is mentioned in README'
+			if rawPack is None:
+				if DEBUG:
+					print 'got a nothing packet, possible issue with pcapy that is mentioned in README'
 
-		return rawPack
+			return rawPack
 
 	def close(self):
 		""" 

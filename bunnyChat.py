@@ -30,14 +30,19 @@ def usage():
 	
 	"""
 	print "BunnyChat.py [COMANDS]"
+	print " MODES:"
+	print "  -c [UserName]   --   Chat client mode"
 	print "  -l              --   Listen mode, gets packets and prints data"
 	print "  -s [data]       --   Send mode, sends packets over and over"
 	print "  -m              --   Passive profiling of all the channels (1-11)"
-	print "  -c [UserName]   --   Chat client mode"
 	print "  -r              --   Reloop shows the mod/remainder of the specified channel"
 	print "  -p              --   Ping/Pong testing, Run this on one machine and it will"
 	print "                        respond with a pong."
 	print "  -k              --   Ping server mode, will repsond to pings with pong and current time"
+	print "  -h 			 --   Shows this message"
+	print ""
+	# print " OPTIONS:"
+
 
 def main():
 	listen_mode = send_mode = scan_chans_mode = chat_mode = ping_mode_serv = ping_mode_client = reloop_mode = False
@@ -53,8 +58,6 @@ def main():
 		if opt == "-h":
 			usage()
 			sys.exit(0)
-		elif opt == "-f":
-			config_file = arg
 		elif opt == "-l": 
 			listen_mode = True
 		elif opt == "-r":

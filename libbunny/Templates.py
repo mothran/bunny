@@ -325,6 +325,8 @@ class Templates:
 			"""
 			
 			Creates a packet with injected encrypted data.
+
+			Inject data into the SSID field, this should be considered for modification to a vendor field
 			
 			"""
 
@@ -376,8 +378,17 @@ class Templates:
 				value = input[2:length+2]
 				temp_tags.append([id, length, value])
 				input = input[length + 2:]
-			return temp_tags[0][2]
-			
+				
+			# Check the SSID tag for sanity,
+			for tag, length, value in temp_tags:
+				if tag == "\x00":
+					if length == 0:
+						return False
+					else:
+						return value
+					break
+			return False
+
 		def tagGrabber(self, id):
 			"""
 			

@@ -203,7 +203,7 @@ class BunnyReadThread(threading.Thread):
 			# decode the bunny packet
 			temp = type[2].decode(encoded)
 
-			if temp is False or temp is None:
+			if temp is False:
 				if DEBUG:
 					print "decoding fail"
 				continue

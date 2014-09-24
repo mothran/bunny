@@ -79,3 +79,9 @@ Create a packaged version with dependencies to reduce the install time.
 
 ##Bugs
 Due to this (https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=500041) bug in pcapy, at least on Arch linux I had to NOT use the offical upstream but the packaged AUR here: https://aur.archlinux.org/packages/python2-pcapy/
+
+Sometimes on ubuntu there is a rfkill block when trying to bring up an interface and you might see:
+    SIOCSIFFLAGS: Operation not possible due to RF-kill
+    
+you can solve this temporarly by:
+    sudo rfkill unblock wifi
