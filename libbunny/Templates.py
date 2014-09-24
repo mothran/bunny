@@ -116,6 +116,9 @@ class Templates:
 				https://github.com/qca/open-ath9k-htc-firmware/issues/16
 			
 			"""
+
+			self.sequence_num = struct.pack("<H", random.randrange(0,65536) & 0xF000)
+
 			# timestamp needs more testing.
 			outbound = self.type + self.frame_control + self.duration + self.BSSID + self.SA + self.DA + self.sequence_num + self.timestamp + self.beacon_interval + inject_data[0:2]
 			
@@ -149,7 +152,7 @@ class Templates:
 				tag[1] = len(tag[2])
 			
 			# + 4 if for eating the checksum that for w/e reason gets parsed as a tag.	
-			outpack = outpack + tag[0] + struct.pack("B", tag[1]+4) + tag[2]
+			outpack = outpack + tag[0] + struct.pack("B", tag[1]) + tag[2]
 			
 			return outpack
 		
@@ -244,6 +247,8 @@ class Templates:
 			Make a QOS data packet with injected data, fields are: Sequence num and databody
 			
 			"""
+			self.sequence_num = struct.pack("<H", random.randrange(0,65536) & 0xF000)
+
 			outbound = self.type + self.frame_control + self.duration+ self.BSSID + self.SA + self.DA + self.sequence_num + self.QOS
 			
 			outbound = outbound + struct.pack("B", len(inject_data)) + inject_data
@@ -322,6 +327,8 @@ class Templates:
 			Creates a packet with injected encrypted data.
 			
 			"""
+
+			self.sequence_num = struct.pack("<H", random.randrange(0,65536) & 0xF000)
 			
 			outbound = self.type + self.frame_control + self.duration + self.DA + self.SA + self.BSSID + self.sequence_num
 			outbound = outbound + "\x00" + struct.pack("<B", len(inject_data)) + inject_data 

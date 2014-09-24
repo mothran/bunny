@@ -20,12 +20,24 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Bunny.  If not, see <http://www.gnu.org/licenses/>.
 
-import struct, os, time, pipes
+import struct, time, pipes, subprocess
 
 import PyLorcon2
 from pcapy import open_live
 
 from config import *
+
+
+# Helper functions for modifiing the state of the iface. 
+def setmonitor(iface, monitor=True):
+	mode = "monitor"
+	if not monitor:
+		mode = "managed"
+
+	# I don't like this, it feels hacky
+	subprocess.call(["ifconfig", pipes.quote(iface), "down"])
+	subprocess.call(["iwconfig", pipes.quote(iface), "mode", mode])
+	subprocess.call(["ifconfig", pipes.quote(iface), "up"])
 
 
 class SendRec:
@@ -34,7 +46,7 @@ class SendRec:
 	Main IO functionality of bunny, using pcapy and lorcon to do send and receive.
 	
 	"""
-	def __init__(self):		
+	def __init__(self):
 		try:
 			self.lorcon = PyLorcon2.Context(IFACE)
 		except PyLorcon2.Lorcon2Exception as err:
@@ -42,6 +54,7 @@ class SendRec:
 			print str(err)
 			exit()
 		
+		setmonitor(IFACE, monitor=True)
 		try:
 			self.lorcon.open_injmon()
 		except PyLorcon2.Lorcon2Exception as err:
@@ -51,8 +64,6 @@ class SendRec:
 
 		self.lorcon.set_channel(CHANNEL)
 		
-		# This needs an audit.
-		os.system("ifconfig " + pipes.quote(IFACE) + " up")
 		
 		# Quick definitions for pcapy
 		MAX_LEN      = 1514		# max size of packet to capture
@@ -143,9 +154,17 @@ class SendRec:
 		RadioTap headers included
 		
 		"""
+
 		header, rawPack = self.pcapy.next()
+		if rawPack is None:
+			if DEBUG:
+				print 'got a nothing packet, possible issue with pcapy that is mentioned in README'
+
 		return rawPack
 
 	def close(self):
+		""" 
+		Clean things up
+		"""
 		self.lorcon.close()
-		
+		setmonitor(IFACE, monitor=False)

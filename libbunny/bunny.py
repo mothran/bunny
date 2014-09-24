@@ -203,7 +203,7 @@ class BunnyReadThread(threading.Thread):
 			# decode the bunny packet
 			temp = type[2].decode(encoded)
 
-			if temp is False:
+			if temp is False or temp is None:
 				if DEBUG:
 					print "decoding fail"
 				continue
@@ -213,6 +213,7 @@ class BunnyReadThread(threading.Thread):
 				
 				if blockget == False:
 					pack_len, = struct.unpack("H", temp[0:2])
+
 					if DEBUG:
 						print "size: " + str(pack_len)
 					
@@ -271,16 +272,12 @@ class BroadCaster(threading.Thread):
 			
 			
 			while ( len(packet) != 0 ):
-				entry = self.model.getEntryFrom(self.model.type_ranges)
-				try:
-					outpacket = entry[2].makePacket(packet[:entry[3]])
-					if DEBUG:
-						print "Sending with: %s" % self.model.rawToType(entry[0])
-						print "length: " + str(len(outpacket))
-					
-				except AttributeError:
-					#TODO: WTF does this do?
-					continue
+				entry = self.model.getEntry()
+				outpacket = entry[2].makePacket(packet[:entry[3]])
+				if DEBUG:
+					print "Sending with: %s" % self.model.rawToType(entry[0])
+					print "length: " + str(len(outpacket))
+
 				packet = packet[entry[3]:]
 				self.inandout.sendPacket(outpacket)
 			#TIMING
