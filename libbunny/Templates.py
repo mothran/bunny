@@ -30,6 +30,9 @@ class Templates:
 	Contains templates for all packet types used by bunny.
 	
 	"""
+	def generate_seqnumb(self):
+		return struct.pack("<H", random.randrange(0,65536) & 0xF000)
+
 	class Beacon:
 		"""
 		
@@ -117,7 +120,7 @@ class Templates:
 			
 			"""
 
-			self.sequence_num = struct.pack("<H", random.randrange(0,65536) & 0xF000)
+			self.sequence_num = generate_seqnumb()
 
 			# timestamp needs more testing.
 			outbound = self.type + self.frame_control + self.duration + self.BSSID + self.SA + self.DA + self.sequence_num + self.timestamp + self.beacon_interval + inject_data[0:2]
@@ -247,7 +250,7 @@ class Templates:
 			Make a QOS data packet with injected data, fields are: Sequence num and databody
 			
 			"""
-			self.sequence_num = struct.pack("<H", random.randrange(0,65536) & 0xF000)
+			self.sequence_num = generate_seqnumb()
 
 			outbound = self.type + self.frame_control + self.duration+ self.BSSID + self.SA + self.DA + self.sequence_num + self.QOS
 			
@@ -330,7 +333,7 @@ class Templates:
 			
 			"""
 
-			self.sequence_num = struct.pack("<H", random.randrange(0,65536) & 0xF000)
+			self.sequence_num = generate_seqnumb()
 			
 			outbound = self.type + self.frame_control + self.duration + self.DA + self.SA + self.BSSID + self.sequence_num
 			outbound = outbound + "\x00" + struct.pack("<B", len(inject_data)) + inject_data 

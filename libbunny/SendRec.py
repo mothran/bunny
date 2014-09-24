@@ -27,25 +27,25 @@ from pcapy import open_live, PcapError
 
 from config import *
 
-
-# Helper functions for modifiing the state of the iface. 
-def setmonitor(iface, monitor=True):
-	mode = "monitor"
-	if not monitor:
-		mode = "managed"
-
-	# I don't like this, it feels hacky
-	subprocess.call(["ifconfig", pipes.quote(iface), "down"])
-	subprocess.call(["iwconfig", pipes.quote(iface), "mode", mode])
-	subprocess.call(["ifconfig", pipes.quote(iface), "up"])
-
-
 class SendRec:
 	"""
 	
 	Main IO functionality of bunny, using pcapy and lorcon to do send and receive.
 	
 	"""
+
+		# Helper functions for modifiing the state of the iface. 
+	def setmonitor(self, iface, monitor=True):
+		mode = "monitor"
+		if not monitor:
+			mode = "managed"
+
+		# I don't like this, it feels hacky
+		subprocess.call(["ifconfig", pipes.quote(iface), "down"])
+		subprocess.call(["iwconfig", pipes.quote(iface), "mode", mode])
+		subprocess.call(["ifconfig", pipes.quote(iface), "up"])
+
+
 	def __init__(self):
 		try:
 			self.lorcon = PyLorcon2.Context(IFACE)
@@ -54,7 +54,7 @@ class SendRec:
 			print str(err)
 			exit()
 		
-		setmonitor(IFACE, monitor=True)
+		self.setmonitor(IFACE, monitor=True)
 		try:
 			self.lorcon.open_injmon()
 		except PyLorcon2.Lorcon2Exception as err:
@@ -181,4 +181,4 @@ class SendRec:
 		Clean things up
 		"""
 		self.lorcon.close()
-		setmonitor(IFACE, monitor=False)
+		self.setmonitor(IFACE, monitor=False)
